@@ -1,0 +1,1099 @@
+{
+  "project": {
+    "name": "Bình đẳng giới – Không giới hạn ước mơ",
+    "school": "Trường THCS Quảng Châu, Nghệ An",
+    "audience": "Học sinh THCS lớp 6–9",
+    "version": "1.0",
+    "purpose": "Giúp học sinh nhận diện định kiến giới, hiểu bình đẳng giới, ứng xử tôn trọng và hành động tích cực.",
+    "source_basis": [
+      "Luật Bình đẳng giới số 73/2006/QH11: Điều 4, Điều 5, Điều 6, Điều 10, Điều 18, Điều 23.",
+      "Công văn 4422/SGD&ĐT-TCCB ngày 04/11/2026 về sân chơi sáng tạo Thanh thiếu niên kiến tạo thay đổi vì bình đẳng giới."
+    ],
+    "editorial_note": "Tài liệu giáo dục dành cho học sinh; cần giáo viên rà soát trước khi công bố. Không thu thập dữ liệu nhạy cảm hoặc thông tin nhận diện học sinh."
+  },
+  "topics": [
+    {
+      "id": 1,
+      "title": "Hiểu đúng về bình đẳng giới",
+      "objectives": [
+        "Nêu được khái niệm bình đẳng giới và định kiến giới",
+        "Phân biệt khác biệt cá nhân với định kiến",
+        "Biết phản hồi tôn trọng"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Bình đẳng giới trong học tập",
+      "objectives": [
+        "Nhận diện định kiến trong môn học và hoạt động",
+        "Tôn trọng cơ hội tham gia của mọi học sinh"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Bình đẳng giới trong gia đình",
+      "objectives": [
+        "Nhận thức trách nhiệm chia sẻ việc nhà",
+        "Đề xuất cách phân công phù hợp"
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Bình đẳng giới trong lựa chọn nghề nghiệp",
+      "objectives": [
+        "Nhận diện khuôn mẫu nghề nghiệp",
+        "Lựa chọn dựa trên sở thích, năng lực và thông tin"
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Bình đẳng giới trong môi trường số",
+      "objectives": [
+        "Nhận diện nội dung xúc phạm và định kiến",
+        "Tôn trọng quyền riêng tư, bản quyền và an toàn số"
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Hành động vì môi trường bình đẳng",
+      "objectives": [
+        "Biết hỗ trợ bạn bị phân biệt đối xử",
+        "Đề xuất hành động tích cực và đánh giá tác động"
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "Q01",
+      "topicId": 1,
+      "difficulty": "Nhận biết",
+      "type": "single_choice",
+      "question": "Bình đẳng giới được hiểu phù hợp nhất là gì?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Nam và nữ phải làm mọi việc giống hệt nhau"
+        },
+        {
+          "id": "B",
+          "text": "Nam và nữ có vị trí, vai trò ngang nhau và có cơ hội phát huy năng lực"
+        },
+        {
+          "id": "C",
+          "text": "Chỉ nữ giới cần được tạo cơ hội"
+        },
+        {
+          "id": "D",
+          "text": "Nam giới luôn phải quyết định việc chung"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Bình đẳng giới nhấn mạnh vị trí, vai trò và cơ hội phát huy năng lực ngang nhau; không có nghĩa mọi người phải làm những việc giống hệt nhau."
+    },
+    {
+      "id": "Q02",
+      "topicId": 1,
+      "difficulty": "Nhận biết",
+      "type": "single_choice",
+      "question": "Định kiến giới là gì?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Nhận xét dựa trên năng lực và việc làm cụ thể"
+        },
+        {
+          "id": "B",
+          "text": "Quan niệm thiên lệch về đặc điểm, vai trò hoặc năng lực của nam hay nữ"
+        },
+        {
+          "id": "C",
+          "text": "Sự khác biệt về sở thích cá nhân"
+        },
+        {
+          "id": "D",
+          "text": "Việc phân công công việc theo khả năng"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Định kiến giới là nhận thức, thái độ hoặc đánh giá thiên lệch về đặc điểm, vị trí, vai trò và năng lực của nam hoặc nữ."
+    },
+    {
+      "id": "Q03",
+      "topicId": 1,
+      "difficulty": "Nhận biết",
+      "type": "single_choice",
+      "question": "Ý kiến nào thể hiện định kiến giới?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Bạn nào có năng lực đều có thể tham gia câu lạc bộ khoa học"
+        },
+        {
+          "id": "B",
+          "text": "Con gái không thể giỏi môn Vật lí"
+        },
+        {
+          "id": "C",
+          "text": "Mỗi người có sở thích riêng"
+        },
+        {
+          "id": "D",
+          "text": "Nam và nữ cùng có trách nhiệm giữ gìn lớp học"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Đánh giá năng lực học tập chỉ dựa vào giới tính là định kiến; cần xem xét năng lực và nỗ lực của từng cá nhân."
+    },
+    {
+      "id": "Q04",
+      "topicId": 1,
+      "difficulty": "Thông hiểu",
+      "type": "single_choice",
+      "question": "Bình đẳng giới có nghĩa là:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Mọi người luôn có sở thích giống nhau"
+        },
+        {
+          "id": "B",
+          "text": "Nam và nữ phải có kết quả giống nhau trong mọi việc"
+        },
+        {
+          "id": "C",
+          "text": "Nam và nữ được tôn trọng và có cơ hội công bằng để phát triển"
+        },
+        {
+          "id": "D",
+          "text": "Không được nhắc đến giới tính trong bất cứ hoàn cảnh nào"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Bình đẳng giới tạo điều kiện và cơ hội công bằng, tôn trọng năng lực và hoàn cảnh của mỗi người."
+    },
+    {
+      "id": "Q05",
+      "topicId": 1,
+      "difficulty": "Vận dụng",
+      "type": "single_choice",
+      "question": "Khi nghe một câu nói mang định kiến giới, em nên:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Lặp lại để gây cười"
+        },
+        {
+          "id": "B",
+          "text": "Im lặng trong mọi trường hợp"
+        },
+        {
+          "id": "C",
+          "text": "Bình tĩnh trao đổi, nêu lý do và tôn trọng người nghe"
+        },
+        {
+          "id": "D",
+          "text": "Công kích người nói"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Nên phản hồi bình tĩnh, tập trung vào hành vi hoặc ý kiến, tránh xúc phạm cá nhân."
+    },
+    {
+      "id": "Q06",
+      "topicId": 2,
+      "difficulty": "Nhận biết",
+      "type": "single_choice",
+      "question": "Trong giờ học STEM, ai có thể đảm nhiệm phần lắp ráp mô hình?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Chỉ học sinh nam"
+        },
+        {
+          "id": "B",
+          "text": "Chỉ học sinh nữ"
+        },
+        {
+          "id": "C",
+          "text": "Học sinh có kỹ năng và mong muốn tham gia, không phân biệt giới"
+        },
+        {
+          "id": "D",
+          "text": "Chỉ lớp trưởng"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Việc phân công nên dựa trên năng lực, sở trường, sự tự nguyện và cơ hội học hỏi của học sinh."
+    },
+    {
+      "id": "Q07",
+      "topicId": 2,
+      "difficulty": "Nhận biết",
+      "type": "single_choice",
+      "question": "Một bạn nói: “Con trai không nên học múa”. Đây là biểu hiện của:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Khuyến khích sáng tạo"
+        },
+        {
+          "id": "B",
+          "text": "Định kiến giới"
+        },
+        {
+          "id": "C",
+          "text": "Góp ý về an toàn"
+        },
+        {
+          "id": "D",
+          "text": "Phân công theo chuyên môn"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Sở thích nghệ thuật không nên bị giới hạn bởi khuôn mẫu giới."
+    },
+    {
+      "id": "Q08",
+      "topicId": 2,
+      "difficulty": "Thông hiểu",
+      "type": "single_choice",
+      "question": "Cách phân công trực nhật nào phù hợp nhất?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Bạn nữ lau bảng, bạn nam kê bàn vì đó là việc mặc định"
+        },
+        {
+          "id": "B",
+          "text": "Chỉ giao việc nặng cho nam"
+        },
+        {
+          "id": "C",
+          "text": "Luân phiên hoặc phân công theo khả năng, sức khỏe và sự thống nhất"
+        },
+        {
+          "id": "D",
+          "text": "Để một nhóm làm tất cả"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Phân công hợp lý, luân phiên giúp mọi người cùng có trách nhiệm và cơ hội tham gia."
+    },
+    {
+      "id": "Q09",
+      "topicId": 2,
+      "difficulty": "Vận dụng",
+      "type": "single_choice",
+      "question": "Nếu nhóm chỉ chọn bạn nam thuyết trình vì nghĩ nam nói tốt hơn, nhóm cần:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Giữ nguyên vì quen như vậy"
+        },
+        {
+          "id": "B",
+          "text": "Chọn bạn nữ để chứng minh điều ngược lại dù bạn không muốn"
+        },
+        {
+          "id": "C",
+          "text": "Đánh giá khả năng, nguyện vọng và tạo cơ hội cho các thành viên"
+        },
+        {
+          "id": "D",
+          "text": "Bỏ phần thuyết trình"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Không nên mặc định năng lực giao tiếp theo giới; cần trao cơ hội và tôn trọng nguyện vọng."
+    },
+    {
+      "id": "Q10",
+      "topicId": 2,
+      "difficulty": "Vận dụng",
+      "type": "single_choice",
+      "question": "Một lớp muốn khuyến khích bình đẳng trong học tập. Việc nào thiết thực nhất?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Chỉ khen một giới"
+        },
+        {
+          "id": "B",
+          "text": "Khuyến khích mọi học sinh thử sức ở các môn và hoạt động mình yêu thích"
+        },
+        {
+          "id": "C",
+          "text": "Chia môn học thành môn của nam và môn của nữ"
+        },
+        {
+          "id": "D",
+          "text": "Không cho học sinh đổi vai trò trong nhóm"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Cơ hội tiếp cận môn học và hoạt động nên mở cho tất cả học sinh."
+    },
+    {
+      "id": "Q11",
+      "topicId": 3,
+      "difficulty": "Nhận biết",
+      "type": "single_choice",
+      "question": "Theo tinh thần bình đẳng trong gia đình, công việc nhà nên được:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Giao mặc định cho mẹ và con gái"
+        },
+        {
+          "id": "B",
+          "text": "Chia sẻ giữa các thành viên phù hợp khả năng và thời gian"
+        },
+        {
+          "id": "C",
+          "text": "Chỉ giao cho người lớn"
+        },
+        {
+          "id": "D",
+          "text": "Không cần phân công"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Các thành viên nam và nữ trong gia đình có trách nhiệm chia sẻ công việc gia đình."
+    },
+    {
+      "id": "Q12",
+      "topicId": 3,
+      "difficulty": "Nhận biết",
+      "type": "single_choice",
+      "question": "Con trai và con gái trong gia đình nên được tạo điều kiện như thế nào?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Con trai được học thêm nhiều hơn"
+        },
+        {
+          "id": "B",
+          "text": "Con gái ít được tham gia hoạt động ngoài trời"
+        },
+        {
+          "id": "C",
+          "text": "Được chăm sóc, học tập, vui chơi và phát triển công bằng"
+        },
+        {
+          "id": "D",
+          "text": "Tùy theo định kiến của người lớn"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Trẻ em trai và gái cần được tạo điều kiện như nhau để học tập, vui chơi và phát triển."
+    },
+    {
+      "id": "Q13",
+      "topicId": 3,
+      "difficulty": "Thông hiểu",
+      "type": "single_choice",
+      "question": "Việc nào thể hiện chia sẻ trách nhiệm trong gia đình?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Anh trai và em gái cùng luân phiên rửa bát, dọn bàn"
+        },
+        {
+          "id": "B",
+          "text": "Chỉ con gái dọn dẹp"
+        },
+        {
+          "id": "C",
+          "text": "Chỉ con trai được nghỉ ngơi"
+        },
+        {
+          "id": "D",
+          "text": "Một người luôn làm hết việc nhà"
+        }
+      ],
+      "correctOptionId": "A",
+      "explanation": "Chia sẻ công việc phù hợp khả năng và thời gian là biểu hiện của trách nhiệm chung."
+    },
+    {
+      "id": "Q14",
+      "topicId": 3,
+      "difficulty": "Vận dụng",
+      "type": "single_choice",
+      "question": "Nếu em thấy em trai bị chê vì đang phụ mẹ nấu ăn, em nên:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Cười theo"
+        },
+        {
+          "id": "B",
+          "text": "Nói rằng nấu ăn là việc của nữ"
+        },
+        {
+          "id": "C",
+          "text": "Ủng hộ việc chia sẻ và giải thích đây là kỹ năng cần thiết cho mọi người"
+        },
+        {
+          "id": "D",
+          "text": "Bảo em dừng lại"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Nấu ăn là kỹ năng sống, không phải công việc chỉ dành cho một giới."
+    },
+    {
+      "id": "Q15",
+      "topicId": 3,
+      "difficulty": "Vận dụng",
+      "type": "single_choice",
+      "question": "Gia đình muốn phân chia việc nhà công bằng. Cách nào tốt nhất?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Trao đổi, liệt kê công việc và thống nhất lịch phù hợp"
+        },
+        {
+          "id": "B",
+          "text": "Giao toàn bộ cho người ít tuổi nhất"
+        },
+        {
+          "id": "C",
+          "text": "Chia việc theo câu nói “nam làm việc này, nữ làm việc kia”"
+        },
+        {
+          "id": "D",
+          "text": "Không cần hỏi ý kiến các thành viên"
+        }
+      ],
+      "correctOptionId": "A",
+      "explanation": "Trao đổi và thống nhất dựa trên khả năng, thời gian giúp phân công công bằng và thực tế."
+    },
+    {
+      "id": "Q16",
+      "topicId": 4,
+      "difficulty": "Nhận biết",
+      "type": "single_choice",
+      "question": "Khi lựa chọn nghề nghiệp, học sinh nên căn cứ chủ yếu vào:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Nghề được cho là hợp với giới của mình"
+        },
+        {
+          "id": "B",
+          "text": "Sở thích, năng lực, điều kiện và thông tin nghề nghiệp"
+        },
+        {
+          "id": "C",
+          "text": "Lời trêu chọc của bạn bè"
+        },
+        {
+          "id": "D",
+          "text": "Quan niệm nghề này chỉ dành cho nam hoặc nữ"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Nghề nghiệp nên được lựa chọn dựa trên năng lực, sở thích, điều kiện và hiểu biết thực tế."
+    },
+    {
+      "id": "Q17",
+      "topicId": 4,
+      "difficulty": "Thông hiểu",
+      "type": "single_choice",
+      "question": "Phát biểu nào đúng?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Nữ không thể trở thành kỹ sư"
+        },
+        {
+          "id": "B",
+          "text": "Nam không thể làm điều dưỡng"
+        },
+        {
+          "id": "C",
+          "text": "Mọi người có thể theo đuổi nghề phù hợp năng lực, sau khi đáp ứng yêu cầu nghề"
+        },
+        {
+          "id": "D",
+          "text": "Nghề nghiệp được quyết định bởi giới tính"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Không nên giới hạn nghề nghiệp bằng định kiến; mỗi nghề có yêu cầu năng lực và điều kiện cụ thể."
+    },
+    {
+      "id": "Q18",
+      "topicId": 4,
+      "difficulty": "Vận dụng",
+      "type": "single_choice",
+      "question": "Một bạn nữ thích sửa chữa robot. Cách động viên phù hợp là:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Khuyên bạn đổi sở thích"
+        },
+        {
+          "id": "B",
+          "text": "Nói đó là nghề của nam"
+        },
+        {
+          "id": "C",
+          "text": "Khuyến khích bạn tìm hiểu, học tập và thử sức"
+        },
+        {
+          "id": "D",
+          "text": "Không cho bạn tham gia câu lạc bộ"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Khuyến khích khám phá STEM dựa trên sở thích và năng lực của mỗi học sinh."
+    },
+    {
+      "id": "Q19",
+      "topicId": 4,
+      "difficulty": "Vận dụng",
+      "type": "single_choice",
+      "question": "Khi giới thiệu nghề nghiệp trên website, đội dự án nên:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Chỉ minh họa nam làm kỹ thuật, nữ làm chăm sóc"
+        },
+        {
+          "id": "B",
+          "text": "Dùng ví dụ đa dạng, tránh gán nghề cho một giới"
+        },
+        {
+          "id": "C",
+          "text": "Chỉ giới thiệu nghề có thu nhập cao"
+        },
+        {
+          "id": "D",
+          "text": "Đưa ra kết luận nghề nào phù hợp với từng giới"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Hình ảnh và ví dụ đa dạng giúp tránh củng cố khuôn mẫu nghề nghiệp."
+    },
+    {
+      "id": "Q20",
+      "topicId": 4,
+      "difficulty": "Thông hiểu",
+      "type": "single_choice",
+      "question": "Thông điệp nào phù hợp với chủ đề nghề nghiệp bình đẳng?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Ước mơ có giới hạn"
+        },
+        {
+          "id": "B",
+          "text": "Nghề nghiệp dành riêng cho nam hoặc nữ"
+        },
+        {
+          "id": "C",
+          "text": "Năng lực, đam mê và nỗ lực không bị quyết định bởi định kiến giới"
+        },
+        {
+          "id": "D",
+          "text": "Chọn nghề theo lời trêu chọc"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Thông điệp tập trung vào năng lực và cơ hội, không áp đặt khuôn mẫu giới."
+    },
+    {
+      "id": "Q21",
+      "topicId": 5,
+      "difficulty": "Nhận biết",
+      "type": "single_choice",
+      "question": "Hành vi nào là không phù hợp trên môi trường số?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Chia sẻ thông tin giáo dục có nguồn"
+        },
+        {
+          "id": "B",
+          "text": "Đăng ảnh bạn kèm lời chế giễu vì bạn không theo khuôn mẫu giới"
+        },
+        {
+          "id": "C",
+          "text": "Báo cáo nội dung xúc phạm"
+        },
+        {
+          "id": "D",
+          "text": "Xin phép trước khi đăng ảnh người khác"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Đăng nội dung chế giễu, làm tổn thương người khác có thể tạo môi trường trực tuyến không an toàn."
+    },
+    {
+      "id": "Q22",
+      "topicId": 5,
+      "difficulty": "Vận dụng",
+      "type": "single_choice",
+      "question": "Khi nhận được bình luận miệt thị giới tính trên mạng, em nên:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Chia sẻ rộng rãi để mọi người cùng cười"
+        },
+        {
+          "id": "B",
+          "text": "Đáp trả bằng lời xúc phạm"
+        },
+        {
+          "id": "C",
+          "text": "Không tham gia công kích; lưu bằng chứng khi cần và báo người lớn đáng tin cậy/nền tảng"
+        },
+        {
+          "id": "D",
+          "text": "Công khai thông tin cá nhân người viết"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Cần ưu tiên an toàn, không trả đũa hoặc phát tán thông tin cá nhân; tìm hỗ trợ phù hợp."
+    },
+    {
+      "id": "Q23",
+      "topicId": 5,
+      "difficulty": "Thông hiểu",
+      "type": "single_choice",
+      "question": "Trước khi đăng ảnh hoặc câu chuyện của bạn lên website dự án, cần:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Đăng ngay cho nhanh"
+        },
+        {
+          "id": "B",
+          "text": "Xin phép người liên quan và kiểm tra nội dung"
+        },
+        {
+          "id": "C",
+          "text": "Gắn tên đầy đủ và lớp"
+        },
+        {
+          "id": "D",
+          "text": "Chỉnh sửa để gây cười"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Tôn trọng quyền riêng tư và xin phép trước khi sử dụng hình ảnh, câu chuyện nhận diện được cá nhân."
+    },
+    {
+      "id": "Q24",
+      "topicId": 5,
+      "difficulty": "Nhận biết",
+      "type": "single_choice",
+      "question": "Một poster số về bình đẳng giới nên tránh điều gì?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Thông điệp tích cực"
+        },
+        {
+          "id": "B",
+          "text": "Hình ảnh đa dạng"
+        },
+        {
+          "id": "C",
+          "text": "Ngôn từ xúc phạm hoặc củng cố định kiến"
+        },
+        {
+          "id": "D",
+          "text": "Nguồn thông tin rõ ràng"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Truyền thông cần tôn trọng, không kỳ thị và không lặp lại định kiến."
+    },
+    {
+      "id": "Q25",
+      "topicId": 5,
+      "difficulty": "Vận dụng",
+      "type": "single_choice",
+      "question": "Nếu dùng hình ảnh trên Internet cho sản phẩm, đội thi nên:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Bỏ qua nguồn ảnh"
+        },
+        {
+          "id": "B",
+          "text": "Ghi nguồn và kiểm tra quyền sử dụng hoặc dùng ảnh tự tạo/được phép"
+        },
+        {
+          "id": "C",
+          "text": "Xóa watermark"
+        },
+        {
+          "id": "D",
+          "text": "Nhận là ảnh do đội tự chụp"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Cần tôn trọng bản quyền và ghi nguồn phù hợp; ưu tiên tài nguyên được phép sử dụng."
+    },
+    {
+      "id": "Q26",
+      "topicId": 6,
+      "difficulty": "Nhận biết",
+      "type": "single_choice",
+      "question": "Hành động nào góp phần tạo môi trường học đường bình đẳng?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Chia nhóm theo định kiến giới"
+        },
+        {
+          "id": "B",
+          "text": "Khuyến khích mọi học sinh tham gia và tôn trọng sự khác biệt"
+        },
+        {
+          "id": "C",
+          "text": "Chế giễu bạn có sở thích khác số đông"
+        },
+        {
+          "id": "D",
+          "text": "Chỉ giao vai trò lãnh đạo cho một giới"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Môi trường bình đẳng tạo cơ hội tham gia, được lắng nghe và tôn trọng cho mọi học sinh."
+    },
+    {
+      "id": "Q27",
+      "topicId": 6,
+      "difficulty": "Vận dụng",
+      "type": "single_choice",
+      "question": "Khi chứng kiến bạn bị trêu chọc vì giới tính hoặc biểu hiện giới, em nên:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Quay video đăng mạng"
+        },
+        {
+          "id": "B",
+          "text": "Hùa theo"
+        },
+        {
+          "id": "C",
+          "text": "Hỗ trợ bạn an toàn, không cổ vũ trêu chọc và báo giáo viên khi cần"
+        },
+        {
+          "id": "D",
+          "text": "Đổ lỗi cho bạn"
+        }
+      ],
+      "correctOptionId": "C",
+      "explanation": "Cần bảo vệ người bị ảnh hưởng, không lan truyền nội dung gây tổn thương và tìm người lớn hỗ trợ."
+    },
+    {
+      "id": "Q28",
+      "topicId": 6,
+      "difficulty": "Vận dụng",
+      "type": "single_choice",
+      "question": "Một cam kết cá nhân thiết thực là:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Tôi sẽ không bao giờ mắc lỗi"
+        },
+        {
+          "id": "B",
+          "text": "Tôi sẽ lắng nghe, không dùng lời nói định kiến và chia sẻ việc chung"
+        },
+        {
+          "id": "C",
+          "text": "Tôi sẽ yêu cầu mọi người nghĩ giống mình"
+        },
+        {
+          "id": "D",
+          "text": "Tôi sẽ phán xét người khác"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Cam kết nên cụ thể, khả thi và thể hiện hành vi tôn trọng trong đời sống hằng ngày."
+    },
+    {
+      "id": "Q29",
+      "topicId": 6,
+      "difficulty": "Thông hiểu",
+      "type": "single_choice",
+      "question": "Muốn biết chiến dịch truyền thông có tác động hay không, đội thi nên:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Chỉ đếm số lượt xem"
+        },
+        {
+          "id": "B",
+          "text": "Thu thập phản hồi tự nguyện và so sánh hiểu biết trước – sau bằng câu hỏi phù hợp"
+        },
+        {
+          "id": "C",
+          "text": "Tự khẳng định chiến dịch thành công"
+        },
+        {
+          "id": "D",
+          "text": "Chỉ hỏi thành viên đội thi"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Phản hồi và khảo sát trước – sau giúp đánh giá thay đổi nhận thức; cần diễn giải đúng phạm vi mẫu."
+    },
+    {
+      "id": "Q30",
+      "topicId": 6,
+      "difficulty": "Thông hiểu",
+      "type": "single_choice",
+      "question": "Thông điệp kết thúc dự án phù hợp nhất là:",
+      "options": [
+        {
+          "id": "A",
+          "text": "Ai cũng phải giống nhau"
+        },
+        {
+          "id": "B",
+          "text": "Tôn trọng cơ hội, phát huy năng lực, cùng nhau xóa bỏ định kiến"
+        },
+        {
+          "id": "C",
+          "text": "Chỉ một giới mới có thể dẫn đầu"
+        },
+        {
+          "id": "D",
+          "text": "Không cần thay đổi điều gì"
+        }
+      ],
+      "correctOptionId": "B",
+      "explanation": "Thông điệp nhấn mạnh cơ hội, năng lực, tôn trọng và hành động chung."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "S01",
+      "topic": "Bình đẳng trong học tập",
+      "title": "Chọn thành viên nhóm STEM",
+      "situation": "Nhóm chuẩn bị thi STEM. Một bạn đề nghị chỉ giao phần lắp mạch cho nam vì cho rằng nam khéo tay hơn.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Đồng ý ngay để tiết kiệm thời gian"
+        },
+        {
+          "id": "B",
+          "text": "Cho các thành viên đăng ký, thử sức và phân công theo năng lực, nguyện vọng"
+        },
+        {
+          "id": "C",
+          "text": "Không cho nữ tham gia phần kỹ thuật"
+        }
+      ],
+      "recommendedOptionId": "B",
+      "feedback": "Không suy đoán năng lực theo giới. Tạo cơ hội thử sức và phân công minh bạch theo kỹ năng, nguyện vọng."
+    },
+    {
+      "id": "S02",
+      "topic": "Định kiến trong sở thích",
+      "title": "Bạn nam thích nấu ăn",
+      "situation": "Một bạn nam đăng ký câu lạc bộ nấu ăn nhưng bị bạn bè cười chê.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Cười theo"
+        },
+        {
+          "id": "B",
+          "text": "Khuyên bạn bỏ câu lạc bộ"
+        },
+        {
+          "id": "C",
+          "text": "Tôn trọng sở thích, động viên bạn tham gia nếu bạn muốn"
+        }
+      ],
+      "recommendedOptionId": "C",
+      "feedback": "Sở thích và kỹ năng sống không bị giới hạn bởi khuôn mẫu giới."
+    },
+    {
+      "id": "S03",
+      "topic": "Bình đẳng trong gia đình",
+      "title": "Phân công việc nhà",
+      "situation": "Trong gia đình, chị luôn phải dọn dẹp còn em trai được nghỉ dù cả hai đều có thời gian.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Trao đổi để các thành viên chia sẻ việc phù hợp"
+        },
+        {
+          "id": "B",
+          "text": "Cho rằng đó là việc của chị"
+        },
+        {
+          "id": "C",
+          "text": "Không quan tâm"
+        }
+      ],
+      "recommendedOptionId": "A",
+      "feedback": "Các thành viên gia đình cùng chia sẻ công việc dựa trên khả năng và thời gian."
+    },
+    {
+      "id": "S04",
+      "topic": "Bình đẳng nghề nghiệp",
+      "title": "Lựa chọn nghề nghiệp",
+      "situation": "Một bạn nữ muốn học công nghệ thông tin nhưng nghe lời khuyên rằng ngành này không hợp với nữ.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Khuyên bạn chọn nghề khác vì giới tính"
+        },
+        {
+          "id": "B",
+          "text": "Khuyến khích bạn tìm hiểu yêu cầu nghề, năng lực và cơ hội học tập"
+        },
+        {
+          "id": "C",
+          "text": "Nói bạn không thể thành công"
+        }
+      ],
+      "recommendedOptionId": "B",
+      "feedback": "Định hướng nghề nghiệp nên dựa vào năng lực, sở thích, điều kiện và thông tin đáng tin cậy."
+    },
+    {
+      "id": "S05",
+      "topic": "An toàn số",
+      "title": "Bình luận xúc phạm trên mạng",
+      "situation": "Một hình ảnh của bạn trong lớp bị đăng kèm lời chê bai vì bạn không theo khuôn mẫu giới.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Chia sẻ để tăng tương tác"
+        },
+        {
+          "id": "B",
+          "text": "Bình luận xúc phạm lại"
+        },
+        {
+          "id": "C",
+          "text": "Không phát tán; hỗ trợ bạn, lưu bằng chứng khi cần và báo giáo viên/người lớn đáng tin cậy"
+        }
+      ],
+      "recommendedOptionId": "C",
+      "feedback": "Không lan truyền nội dung gây hại; ưu tiên hỗ trợ người bị ảnh hưởng và báo cáo an toàn."
+    },
+    {
+      "id": "S06",
+      "topic": "Cơ hội tham gia",
+      "title": "Chọn người thuyết trình",
+      "situation": "Nhóm mặc định chọn bạn nam thuyết trình vì nghĩ nam tự tin hơn, dù một bạn nữ cũng muốn thử sức.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Trao đổi nguyện vọng, tạo cơ hội thử sức hoặc chia phần trình bày"
+        },
+        {
+          "id": "B",
+          "text": "Giữ nguyên lựa chọn theo định kiến"
+        },
+        {
+          "id": "C",
+          "text": "Không cho bạn nữ tham gia"
+        }
+      ],
+      "recommendedOptionId": "A",
+      "feedback": "Cần đánh giá khả năng và nguyện vọng thực tế, không gán năng lực giao tiếp theo giới."
+    },
+    {
+      "id": "S07",
+      "topic": "Bình đẳng thể thao",
+      "title": "Trêu chọc vì hoạt động thể thao",
+      "situation": "Một bạn nữ muốn tham gia đội bóng đá nhưng bị nói rằng bóng đá chỉ dành cho nam.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Nói bạn không nên tham gia"
+        },
+        {
+          "id": "B",
+          "text": "Khuyến khích bạn thử sức và tôn trọng quy định, năng lực, an toàn của đội"
+        },
+        {
+          "id": "C",
+          "text": "Cười nhạo bạn"
+        }
+      ],
+      "recommendedOptionId": "B",
+      "feedback": "Hoạt động thể thao nên mở cơ hội tham gia bình đẳng, trên cơ sở điều kiện và an toàn."
+    },
+    {
+      "id": "S08",
+      "topic": "Quyền riêng tư",
+      "title": "Sử dụng ảnh trong dự án",
+      "situation": "Đội muốn đưa ảnh và câu chuyện của một học sinh lên website để minh họa nhưng chưa hỏi ý kiến bạn.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Đăng luôn vì mục đích tốt"
+        },
+        {
+          "id": "B",
+          "text": "Xin phép rõ ràng, chỉ dùng nội dung được đồng ý và hạn chế thông tin nhận diện"
+        },
+        {
+          "id": "C",
+          "text": "Đăng kèm họ tên, lớp và số điện thoại"
+        }
+      ],
+      "recommendedOptionId": "B",
+      "feedback": "Mục đích giáo dục không thay thế sự đồng ý và yêu cầu bảo vệ quyền riêng tư."
+    },
+    {
+      "id": "S09",
+      "topic": "Trung thực dữ liệu",
+      "title": "Phản hồi khảo sát",
+      "situation": "Kết quả khảo sát 25 học sinh cho thấy nhiều bạn còn nhầm lẫn về định kiến giới. Nhóm muốn viết rằng toàn trường đều có định kiến.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Viết đúng phạm vi: trong nhóm khảo sát có nhiều bạn trả lời như vậy; cần khảo sát rộng hơn nếu muốn kết luận toàn trường"
+        },
+        {
+          "id": "B",
+          "text": "Khẳng định toàn trường"
+        },
+        {
+          "id": "C",
+          "text": "Bỏ số liệu không phù hợp"
+        }
+      ],
+      "recommendedOptionId": "A",
+      "feedback": "Không suy rộng quá mức từ mẫu nhỏ; báo cáo trung thực phạm vi và hạn chế khảo sát."
+    },
+    {
+      "id": "S10",
+      "topic": "Ứng xử và hỗ trợ",
+      "title": "Chứng kiến bạn bị bắt nạt",
+      "situation": "Một bạn bị gọi bằng biệt danh xúc phạm liên quan đến giới tính. Em chứng kiến việc đó trong giờ ra chơi.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Quay clip đăng mạng"
+        },
+        {
+          "id": "B",
+          "text": "Nếu an toàn, yêu cầu dừng lại, hỗ trợ bạn và báo giáo viên/người lớn"
+        },
+        {
+          "id": "C",
+          "text": "Đổ lỗi cho người bị trêu"
+        }
+      ],
+      "recommendedOptionId": "B",
+      "feedback": "Ưu tiên an toàn, hỗ trợ người bị ảnh hưởng, không phát tán hình ảnh và nhờ người lớn can thiệp."
+    }
+  ]
+}

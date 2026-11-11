@@ -1,0 +1,155 @@
+rules_version = '2';
+
+/**
+ * FIRESTORE SECURITY RULES - BÌNH ĐẲNG GIỚI – KHÔNG GIỚI HẠN ƯỚC MƠ
+ * Đơn vị: Trường THCS Quảng Châu, Nghệ An
+ * Kiến trúc bảo mật: Zero-Trust, Attribute-Based Access Control (ABAC), Multi-tenant School Isolation
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. GLOBAL SAFETY NET: Từ chối mặc định mọi truy cập
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions cốt lõi
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'password');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Lấy thông tin user đáng tin cậy từ database (không tin cậy client gửi lên)
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        getUserData().role == 'super_admin' &&
+        getUserData().status == 'active';
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        (getUserData().role == 'admin' || getUserData().role == 'super_admin') &&
+        getUserData().status == 'active';
+    }
+
+    function hasPermission(permissionName) {
+      return isSuperAdmin() || (
+        isAdmin() &&
+        permissionName in getUserData().permissions
+      );
+    }
+
+    // 2. SCHOOLS COLLECTION: Thông tin trường học
+    match /schools/{schoolId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSuperAdmin() && isValidId(schoolId);
+    }
+
+    // 3. USERS COLLECTION: Tài khoản quản trị & giáo viên
+    match /users/{userId} {
+      // Người dùng chỉ được xem profile của chính mình; Admin chính được xem danh sách để quản lý
+      allow get: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
+      allow list: if isSuperAdmin();
+
+      // Chỉ Admin chính mới được tạo tài khoản Admin phụ; Tuyệt đối không cho phép tự đăng ký Super Admin
+      allow create: if isSuperAdmin() &&
+        isValidId(userId) &&
+        incoming().role != 'super_admin' &&
+        incoming().keys().hasAll(['schoolId', 'email', 'fullName', 'role', 'status', 'permissions', 'createdAt']) &&
+        incoming().schoolId == getUserData().schoolId;
+
+      // Không cho phép Admin phụ tự nâng quyền hoặc sửa role/permissions
+      allow update: if isSuperAdmin() &&
+        existing().role != 'super_admin' &&
+        incoming().schoolId == existing().schoolId;
+
+      // Không ai được xóa tài khoản Super Admin
+      allow delete: if isSuperAdmin() && existing().role != 'super_admin';
+    }
+
+    // 4. GRADES COLLECTION: Quản lý Khối 6, 7, 8, 9
+    match /grades/{gradeId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin() && isValidId(gradeId);
+    }
+
+    // 5. CLASSES COLLECTION: Quản lý Lớp học (6A1, 6A2, 7A1, 8C1,...)
+    match /classes/{classId} {
+      allow read: if isSignedIn();
+      allow create: if hasPermission('manage_classes') &&
+        isValidId(classId) &&
+        incoming().keys().hasAll(['schoolId', 'gradeLevel', 'name', 'academicYear', 'studentCount', 'status']) &&
+        incoming().name is string && incoming().name.size() <= 20;
+
+      allow update: if hasPermission('manage_classes') &&
+        incoming().schoolId == existing().schoolId;
+
+      allow delete: if isSuperAdmin();
+    }
+
+    // 6. TEACHERS COLLECTION: Quản lý Giáo viên
+    match /teachers/{teacherId} {
+      allow read: if isSignedIn();
+      allow create, update: if hasPermission('manage_teachers') &&
+        isValidId(teacherId) &&
+        incoming().keys().hasAll(['schoolId', 'fullName', 'email', 'subject', 'status']);
+      allow delete: if isSuperAdmin();
+    }
+
+    // 7. STUDENTS COLLECTION: Quản lý Học sinh (Bảo mật thông tin trẻ em)
+    match /students/{studentId} {
+      // Chỉ Admin chính, Admin phụ có quyền 'manage_students'/'view_reports',
+      // hoặc Giáo viên chủ nhiệm lớp của học sinh đó mới được xem.
+      // Học sinh hoặc người dùng ngoài lớp tuyệt đối không được xem danh bạ toàn trường.
+      allow read: if isSuperAdmin() ||
+        hasPermission('manage_students') ||
+        hasPermission('view_reports') ||
+        (isSignedIn() && getUserData().role == 'teacher' && resource.data.classId == getUserData().homeroomClassId);
+
+      allow create, update: if hasPermission('manage_students') &&
+        isValidId(studentId) &&
+        incoming().keys().hasAll(['schoolId', 'studentCode', 'fullName', 'gradeLevel', 'classId', 'status']);
+      allow delete: if isSuperAdmin();
+    }
+
+    // 8. ACTIVITY LOGS COLLECTION: Nhật ký hoạt động (Bất biến)
+    match /activityLogs/{logId} {
+      // Chỉ Admin chính và Admin phụ có quyền view_reports mới được xem nhật ký
+      allow read: if isSuperAdmin() || hasPermission('view_reports');
+      // Nhật ký chỉ được tạo mới (append-only), không ai được chỉnh sửa hoặc xóa
+      allow create: if isSignedIn() &&
+        isValidId(logId) &&
+        incoming().actorId == request.auth.uid &&
+        incoming().keys().hasAll(['schoolId', 'timestamp', 'actorId', 'actorName', 'actorRole', 'action', 'entity', 'details']);
+      allow update, delete: if false;
+    }
+
+    // 9. PUBLIC CAMPAIGN CONTENT: Tài nguyên mở (30 câu hỏi, 10 tình huống, bài viết)
+    match /public_content/{contentId} {
+      allow read: if true;
+      allow write: if hasPermission('manage_campaigns');
+    }
+  }
+}

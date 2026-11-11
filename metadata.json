@@ -1,0 +1,8 @@
+{
+  "name": "Remix Bình Đẳng Giới – Không Giới Hạn Ước Mơ",
+  "description": "Website truyền thông và giáo dục bình đẳng giới dành cho học sinh THCS - Trường THCS Quảng Châu, Nghệ An",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

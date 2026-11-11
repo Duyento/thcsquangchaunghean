@@ -1,0 +1,102 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function hasLink() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/accountLinks/$(request.auth.uid));
+    }
+
+    function link() {
+      return get(/databases/$(database)/documents/accountLinks/$(request.auth.uid)).data;
+    }
+
+    function hasAccount() {
+      return hasLink()
+        && link().internalAccountId is string
+        && exists(/databases/$(database)/documents/users/$(link().internalAccountId));
+    }
+
+    function account() {
+      return get(/databases/$(database)/documents/users/$(link().internalAccountId)).data;
+    }
+
+    function isConsistentIdentity() {
+      return hasAccount()
+        && request.auth.token.email_verified == true
+        && link().keys().hasAll([
+          'internalAccountId',
+          'role',
+          'schoolId',
+          'status',
+          'createdAt',
+          'linkedBy'
+        ])
+        && link().keys().hasOnly([
+          'internalAccountId',
+          'role',
+          'schoolId',
+          'status',
+          'createdAt',
+          'linkedBy'
+        ])
+        && link().internalAccountId is string
+        && link().role is string
+        && link().schoolId is string
+        && link().status is string
+        && link().createdAt is timestamp
+        && link().linkedBy is string
+        && link().role == account().role
+        && link().schoolId == account().schoolId
+        && link().status == account().status
+        && account().role in ['super_admin', 'admin', 'teacher']
+        && account().status in ['active', 'locked', 'pending'];
+    }
+
+    function isActiveUser() {
+      return isConsistentIdentity()
+        && link().status == 'active'
+        && account().status == 'active';
+    }
+
+    function isSchoolAdmin(schoolId) {
+      return isActiveUser()
+        && link().schoolId == schoolId
+        && link().role in ['super_admin', 'admin'];
+    }
+
+    match /accountLinks/{uid} {
+      allow get: if request.auth != null
+        && request.auth.uid == uid
+        && isActiveUser();
+      allow list, create, update, delete: if false;
+    }
+
+    match /users/{internalAccountId} {
+      allow get: if isActiveUser()
+        && link().internalAccountId == internalAccountId;
+      allow list, create, update, delete: if false;
+    }
+
+    match /schools/{schoolId} {
+      allow get, list: if isActiveUser()
+        && link().schoolId == schoolId;
+      allow create, update, delete: if false;
+    }
+
+    match /schoolData/{schoolId}/records/{recordId} {
+      allow get, list: if isActiveUser()
+        && link().schoolId == schoolId;
+      allow create: if isSchoolAdmin(schoolId)
+        && request.resource.data.schoolId == schoolId;
+      allow update: if isSchoolAdmin(schoolId)
+        && resource.data.schoolId == schoolId
+        && request.resource.data.schoolId == schoolId;
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
