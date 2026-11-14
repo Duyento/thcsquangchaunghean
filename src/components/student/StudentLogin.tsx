@@ -69,7 +69,7 @@ export default function StudentLogin({ onLoginSuccess, onBackToPublic }: Student
     return () => clearInterval(timer);
   }, [rateLimitState.isLocked, countdown]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -85,7 +85,7 @@ export default function StudentLogin({ onLoginSuccess, onBackToPublic }: Student
     setIsSubmitting(true);
 
     try {
-      const res = studentService.login(fullName, gradeLevel, classId, accessCode);
+      const res = await studentService.login(fullName, gradeLevel, classId, accessCode);
       if (res.success && res.session) {
         onLoginSuccess(res.session);
       } else {
@@ -94,8 +94,8 @@ export default function StudentLogin({ onLoginSuccess, onBackToPublic }: Student
         setCountdown(updatedRate.remainingSeconds);
         setError(res.error || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!");
       }
-    } catch {
-      setError("Đã xảy ra sự cố trong quá trình xác thực. Vui lòng thử lại!");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Đã xảy ra sự cố trong quá trình xác thực. Vui lòng thử lại!");
     } finally {
       setIsSubmitting(false);
     }

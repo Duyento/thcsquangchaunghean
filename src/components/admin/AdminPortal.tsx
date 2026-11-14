@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { adminService } from "../../services/adminService";
-import { UserAccount, AdminPermission } from "../../types/adminTypes";
+import { UserAccount, AdminPermission, Grade } from "../../types/adminTypes";
 import AdminLogin from "./AdminLogin";
 import OverviewTab from "./OverviewTab";
 import GradesTab from "./GradesTab";
@@ -43,46 +43,45 @@ import {
 
 interface AdminPortalProps {
   onBackToPublic: () => void;
+  currentUser: UserAccount | null;
+  authLoading: boolean;
+  authError?: string;
+  onLoginSuccess: (user: UserAccount) => void;
+  onLogout: () => Promise<void>;
 }
 
-export default function AdminPortal({ onBackToPublic }: AdminPortalProps) {
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
-    return adminService.getCurrentSessionUser();
-  });
+export default function AdminPortal({
+  onBackToPublic,
+  currentUser,
+  authLoading,
+  authError,
+  onLoginSuccess,
+  onLogout,
+}: AdminPortalProps) {
   const [activeTab, setActiveTab] = useState<string>("overview");
+  const [selectedGradeScope, setSelectedGradeScope] = useState<Grade | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
 
-  // Monitor session validity
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const user = adminService.getCurrentSessionUser();
-      if (!user && currentUser) {
-        setCurrentUser(null);
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [currentUser]);
-
-  const handleLoginSuccess = (user: UserAccount) => {
-    setCurrentUser(user);
-    setActiveTab("overview");
-  };
-
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
-      adminService.logout();
-      setCurrentUser(null);
+      setLogoutError("");
+      await onLogout();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Không thể xác minh đã đăng xuất an toàn.");
+      setLogoutError(error instanceof Error ? error.message : "Không thể kết thúc phiên Firebase Auth.");
     }
   };
 
   // If not logged in, render AdminLogin view
   if (!currentUser) {
+    if (authLoading) {
+      return <div className="min-h-[80vh] grid place-items-center text-sm text-slate-600">Đang khôi phục phiên Firebase Auth...</div>;
+    }
     return (
       <AdminLogin
-        onLoginSuccess={handleLoginSuccess}
+        onLoginSuccess={onLoginSuccess}
         onBackToPublic={onBackToPublic}
+        authError={logoutError || authError}
       />
     );
   }
@@ -91,6 +90,7 @@ export default function AdminPortal({ onBackToPublic }: AdminPortalProps) {
   interface NavItem {
     id: string;
     label: string;
+    group: string;
     icon: typeof LayoutDashboard;
     permission?: AdminPermission;
     superAdminOnly?: boolean;
@@ -100,73 +100,85 @@ export default function AdminPortal({ onBackToPublic }: AdminPortalProps) {
   const navItems: NavItem[] = [
     {
       id: "overview",
-      label: "Tổng quan hệ thống",
+      label: "Tổng quan",
+      group: "Trường học",
       icon: LayoutDashboard,
     },
     {
       id: "grades",
-      label: "Quản lý khối (6 - 9)",
+      label: "Khối học",
+      group: "Trường học",
       icon: Layers,
     },
     {
       id: "classes",
-      label: "Quản lý lớp học",
+      label: "Lớp học",
+      group: "Trường học",
       icon: School,
       permission: "manage_classes",
     },
     {
       id: "teachers",
-      label: "Quản lý giáo viên",
+      label: "Giáo viên",
+      group: "Trường học",
       icon: GraduationCap,
       permission: "manage_teachers",
     },
     {
       id: "students",
-      label: "Quản lý học sinh",
+      label: "Học sinh",
+      group: "Trường học",
       icon: Users,
       permission: "manage_students",
     },
     {
       id: "questions",
       label: "Ngân hàng câu hỏi",
+      group: "Học liệu",
       icon: HelpCircle,
       permission: "manage_questions",
     },
     {
       id: "posts",
-      label: "Bài viết tuyên truyền",
+      label: "Bài viết",
+      group: "Học liệu",
       icon: FileText,
       permission: "manage_posts",
     },
     {
       id: "videos",
-      label: "Video tuyên truyền",
+      label: "Video",
+      group: "Học liệu",
       icon: Video,
       permission: "manage_videos",
     },
     {
       id: "images",
-      label: "Thư viện hình ảnh",
+      label: "Hình ảnh",
+      group: "Học liệu",
       icon: ImageIcon,
       permission: "manage_images",
     },
     {
       id: "approval",
-      label: "Duyệt nội dung",
+      label: "Phê duyệt nội dung",
+      group: "Học liệu",
       icon: CheckCheck,
       superAdminOnly: true,
       badge: "Duyệt",
     },
     {
       id: "competitions",
-      label: "Quản lý cuộc thi",
+      label: "Cuộc thi",
+      group: "Hệ thống",
       icon: Trophy,
       superAdminOnly: true,
       badge: "Super Admin",
     },
     {
       id: "accounts",
-      label: "Tài khoản & Phân quyền",
+      label: "Tài khoản và quyền",
+      group: "Hệ thống",
       icon: ShieldCheck,
       superAdminOnly: true,
       badge: "Admin chính",
@@ -174,12 +186,14 @@ export default function AdminPortal({ onBackToPublic }: AdminPortalProps) {
     {
       id: "logs",
       label: "Nhật ký hoạt động",
+      group: "Hệ thống",
       icon: ClipboardList,
       permission: "view_reports",
     },
     {
       id: "settings",
-      label: "Cài đặt & Sao lưu JSON",
+      label: "Cài đặt và sao lưu",
+      group: "Hệ thống",
       icon: Settings,
       superAdminOnly: true,
       badge: "Admin chính",
@@ -200,8 +214,13 @@ export default function AdminPortal({ onBackToPublic }: AdminPortalProps) {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row font-sans">
+      {logoutError && (
+        <div role="alert" className="fixed top-3 right-3 z-50 max-w-md rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 shadow">
+          {logoutError}
+        </div>
+      )}
       {/* Mobile Top Header */}
-      <div className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800 shadow-md">
+      <div className="md:hidden bg-ink text-white p-4 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800 shadow-md">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
@@ -230,7 +249,7 @@ export default function AdminPortal({ onBackToPublic }: AdminPortalProps) {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white flex flex-col transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-ink text-white flex flex-col transition-transform duration-300 ease-in-out md:static md:translate-x-0 ${
           mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -306,42 +325,47 @@ export default function AdminPortal({ onBackToPublic }: AdminPortalProps) {
 
         {/* Navigation List */}
         <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
-          <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            Chức Năng Quản Trị
-          </div>
-          {navItems.map((item) => {
+          {navItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             const allowed = canAccessTab(item);
 
             return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setMobileSidebarOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs md:text-sm font-medium transition-colors text-left ${
-                  isActive
-                    ? "bg-blue-600 text-white font-semibold shadow-sm"
-                    : allowed
-                    ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                    : "text-slate-500 hover:bg-slate-800/50 cursor-not-allowed opacity-60"
-                }`}
-              >
-                <div className="flex items-center gap-2.5 truncate">
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-400"}`} />
-                  <span className="truncate">{item.label}</span>
-                </div>
-                {item.badge && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium shrink-0">
-                    {item.badge}
-                  </span>
+              <div key={item.id}>
+                {(index === 0 || navItems[index - 1].group !== item.group) && (
+                  <p className="px-3 pb-1 pt-3 text-[10px] font-bold uppercase text-slate-400">
+                    {item.group}
+                  </p>
                 )}
-                {!allowed && (
-                  <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                )}
-              </button>
+                <button
+                  onClick={() => {
+                    if (item.id !== "classes") setSelectedGradeScope(null);
+                    setActiveTab(item.id);
+                    setMobileSidebarOpen(false);
+                  }}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs md:text-sm font-medium transition-colors text-left ${
+                    isActive
+                      ? "bg-brand text-white font-semibold shadow-sm"
+                      : allowed
+                      ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                      : "text-slate-500 hover:bg-slate-800/50 cursor-not-allowed opacity-60"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 truncate">
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-400"}`} />
+                    <span className="truncate">{item.label}</span>
+                  </div>
+                  {item.badge && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium shrink-0">
+                      {item.badge}
+                    </span>
+                  )}
+                  {!allowed && (
+                    <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  )}
+                </button>
+              </div>
             );
           })}
         </nav>
@@ -436,11 +460,14 @@ export default function AdminPortal({ onBackToPublic }: AdminPortalProps) {
               {activeTab === "grades" && (
                 <GradesTab
                   currentUser={currentUser}
-                  onSelectGrade={(_g) => setActiveTab("classes")}
+                  onSelectGrade={(grade) => {
+                    setSelectedGradeScope(grade);
+                    setActiveTab("classes");
+                  }}
                 />
               )}
               {activeTab === "classes" && (
-                <ClassesTab currentUser={currentUser} />
+                <ClassesTab currentUser={currentUser} initialGradeFilter={selectedGradeScope ?? undefined} />
               )}
               {activeTab === "teachers" && (
                 <TeachersTab currentUser={currentUser} />

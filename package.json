@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test:firebase-emulator": "tsx scripts/runFirebaseEmulatorTests.ts"
+    "test": "npm run test:firebase-emulator && tsx --test tests/adminService.test.ts",
+    "test:firebase-emulator": "tsx scripts/runFirebaseEmulatorTests.ts",
+    "emulator:start": "tsx scripts/startFirebaseEmulators.ts",
+    "emulator:seed-super-admin": "tsx scripts/seedSuperAdminEmulator.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -17,6 +20,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
+    "firebase": "^13.2.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "react": "^19.0.1",
@@ -32,7 +36,7 @@
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.28.2",
-    "firebase": "^13.2.0",
+    "firebase-admin": "^13.10.0",
     "firebase-tools": "^15.35.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",

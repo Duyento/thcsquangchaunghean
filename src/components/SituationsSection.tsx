@@ -56,12 +56,12 @@ export default function SituationsSection({ setActiveTab }: SituationsSectionPro
     <div className="space-y-10 py-6 pb-20">
       {/* Header Banner */}
       <div className="text-center max-w-3xl mx-auto space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-bold uppercase tracking-wider">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-bold">
           <BookOpen className="w-3.5 h-3.5" />
-          <span>Chuyên mục 3: Kỹ năng thực chiến</span>
+          <span>Kỹ năng ứng xử</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Góc Tình Huống – Em Sẽ Làm Gì?
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-ink">
+          Tình huống thực tế
         </h1>
         <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
           10 tình huống thực tế thường gặp trong đời sống học đường, gia đình và trên mạng xã hội. Hãy đặt mình vào vị trí của nhân vật để đưa ra quyết định bình đẳng, nhân văn và bản lĩnh nhất!

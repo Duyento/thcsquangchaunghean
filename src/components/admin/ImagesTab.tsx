@@ -140,7 +140,7 @@ export default function ImagesTab({ currentUser }: ImagesTabProps) {
   };
 
   // Upload image submit
-  const handleSaveImage = (targetStatus: ContentStatus) => {
+  const handleSaveImage = async (targetStatus: ContentStatus) => {
     setFormError("");
     const finalImageUrl = imageInputMethod === "file" ? fileBase64 : imageUrl.trim();
 
@@ -149,17 +149,23 @@ export default function ImagesTab({ currentUser }: ImagesTabProps) {
       return;
     }
 
-    const res = contentService.createImage(currentUser, {
-      albumId: selectedAlbumId || albums[0]?.id || "album-1",
-      title: imageTitle.trim(),
-      caption: caption.trim(),
-      sourceCredit: sourceCredit.trim() || currentUser.fullName,
-      topicId,
-      imageUrl: finalImageUrl,
-      format: detectedFormat,
-      fileSizeKb,
-      status: targetStatus,
-    });
+    let res;
+    try {
+      res = await contentService.createImage(currentUser, {
+        albumId: selectedAlbumId || albums[0]?.id || "album-1",
+        title: imageTitle.trim(),
+        caption: caption.trim(),
+        sourceCredit: sourceCredit.trim() || currentUser.fullName,
+        topicId,
+        imageUrl: finalImageUrl,
+        format: detectedFormat,
+        fileSizeKb,
+        status: targetStatus,
+      });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể lưu hình ảnh.");
+      return;
+    }
 
     if (res.success) {
       refreshList();
@@ -176,11 +182,17 @@ export default function ImagesTab({ currentUser }: ImagesTabProps) {
   };
 
   // Create Album
-  const handleCreateAlbum = (e: React.FormEvent) => {
+  const handleCreateAlbum = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!albumName.trim()) return;
 
-    const res = contentService.createAlbum(currentUser, albumName.trim(), albumDesc.trim(), albumTopicId);
+    let res;
+    try {
+      res = await contentService.createAlbum(currentUser, albumName.trim(), albumDesc.trim(), albumTopicId);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Không thể tạo album.");
+      return;
+    }
     if (res.success) {
       refreshList();
       setShowAlbumModal(false);
@@ -195,10 +207,16 @@ export default function ImagesTab({ currentUser }: ImagesTabProps) {
   };
 
   // Delete Image
-  const handleDeleteImage = (img: GalleryImageItem) => {
+  const handleDeleteImage = async (img: GalleryImageItem) => {
     if (!window.confirm(`Bạn có chắc muốn xóa ảnh "${img.title}"?`)) return;
 
-    const res = contentService.deleteImage(currentUser, img.id);
+    let res;
+    try {
+      res = await contentService.deleteImage(currentUser, img.id);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Không thể xóa ảnh.");
+      return;
+    }
     if (res.success) {
       refreshList();
       setActionSuccess(`Đã xóa ảnh "${img.title}"!`);
@@ -494,7 +512,7 @@ export default function ImagesTab({ currentUser }: ImagesTabProps) {
                     type="text"
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://... hoặc /src/assets/images/..."
+                    placeholder="URL ảnh HTTPS"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                   {imageUrl && (

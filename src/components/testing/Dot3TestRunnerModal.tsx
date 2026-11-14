@@ -44,7 +44,7 @@ export default function Dot3TestRunnerModal({ isOpen, onClose }: Dot3TestRunnerM
     // Họ tên: "Nguyễn Hoàng Nam", Khối: 6, Lớp: 6A1, Mã lớp: "QC6A1"
     // -------------------------------------------------------------
     try {
-      const res1 = studentService.login("Nguyễn Hoàng Nam", 6, "class-6a1", "QC6A1");
+      const res1 = await studentService.login("Nguyễn Hoàng Nam", 6, "class-6a1", "QC6A1");
       testResults.push({
         id: 1,
         title: "Đăng nhập học sinh hợp lệ",
@@ -71,7 +71,7 @@ export default function Dot3TestRunnerModal({ isOpen, onClose }: Dot3TestRunnerM
     // Họ tên không tồn tại trong danh sách lớp 6A1
     // -------------------------------------------------------------
     try {
-      const res2 = studentService.login("Trần Văn KhôngTồnTại", 6, "class-6a1", "QC6A1");
+      const res2 = await studentService.login("Trần Văn KhôngTồnTại", 6, "class-6a1", "QC6A1");
       testResults.push({
         id: 2,
         title: "Đăng nhập sai họ tên học sinh",
@@ -98,7 +98,7 @@ export default function Dot3TestRunnerModal({ isOpen, onClose }: Dot3TestRunnerM
     // Học sinh Nguyễn Hoàng Nam (lớp 6A1) nhưng chọn lớp 7A1
     // -------------------------------------------------------------
     try {
-      const res3 = studentService.login("Nguyễn Hoàng Nam", 7, "class-7a1", "QC7A1");
+      const res3 = await studentService.login("Nguyễn Hoàng Nam", 7, "class-7a1", "QC7A1");
       testResults.push({
         id: 3,
         title: "Chọn sai lớp học",
@@ -125,7 +125,7 @@ export default function Dot3TestRunnerModal({ isOpen, onClose }: Dot3TestRunnerM
     // Nhập mã sai (e.g. "SAIMA123")
     // -------------------------------------------------------------
     try {
-      const res4 = studentService.login("Nguyễn Hoàng Nam", 6, "class-6a1", "SAIMA123");
+      const res4 = await studentService.login("Nguyễn Hoàng Nam", 6, "class-6a1", "SAIMA123");
       testResults.push({
         id: 4,
         title: "Nhập mã lớp dùng chung sai",
@@ -152,7 +152,7 @@ export default function Dot3TestRunnerModal({ isOpen, onClose }: Dot3TestRunnerM
     // Test học sinh "Phạm Quỳnh Anh" (status: locked trong 6A1)
     // -------------------------------------------------------------
     try {
-      const res5 = studentService.login("Phạm Quỳnh Anh", 6, "class-6a1", "QC6A1");
+      const res5 = await studentService.login("Phạm Quỳnh Anh", 6, "class-6a1", "QC6A1");
       testResults.push({
         id: 5,
         title: "Tài khoản học sinh bị khóa",
@@ -307,9 +307,9 @@ export default function Dot3TestRunnerModal({ isOpen, onClose }: Dot3TestRunnerM
     // Kiểm tra phiên đăng nhập đã được xóa sạch
     // -------------------------------------------------------------
     try {
-      studentService.login("Nguyễn Hoàng Nam", 6, "class-6a1", "QC6A1");
+      await studentService.login("Nguyễn Hoàng Nam", 6, "class-6a1", "QC6A1");
       const activeBefore = studentService.getCurrentSession();
-      studentService.logout();
+      await studentService.logout();
       const activeAfter = studentService.getCurrentSession();
 
       const logoutSuccess = activeBefore !== null && activeAfter === null;
@@ -339,9 +339,9 @@ export default function Dot3TestRunnerModal({ isOpen, onClose }: Dot3TestRunnerM
     // Kịch bản 10: Phiên đăng nhập hết hạn hoặc bị can thiệp token
     // -------------------------------------------------------------
     try {
-      studentService.login("Nguyễn Hoàng Nam", 6, "class-6a1", "QC6A1");
+      await studentService.login("Nguyễn Hoàng Nam", 6, "class-6a1", "QC6A1");
       // Simulate tampered token
-      studentService.simulateTamperedSession();
+      await studentService.simulateTamperedSession();
       const sessionAfterTamper = studentService.getCurrentSession();
 
       const tamperBlocked = sessionAfterTamper === null;

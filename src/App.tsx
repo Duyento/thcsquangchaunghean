@@ -16,6 +16,7 @@ import Dot3TestRunnerModal from "./components/testing/Dot3TestRunnerModal";
 import { studentService } from "./services/studentService";
 import { adminService } from "./services/adminService";
 import { StudentSession, UserAccount } from "./types/adminTypes";
+import { useAdminAuthSession } from "./hooks/useAdminAuthSession";
 import { ArrowUp } from "lucide-react";
 
 type PortalMode = "public" | "student" | "teacher" | "admin";
@@ -31,29 +32,39 @@ export default function App() {
     return studentService.getCurrentSession();
   });
 
-  const [teacherUser, setTeacherUser] = useState<UserAccount | null>(() => {
-    const user = adminService.getCurrentSessionUser();
-    return user && user.role === "teacher" ? user : null;
-  });
+  const { session: adminSession, signOut: signOutAdmin } = useAdminAuthSession();
+  const adminUser = adminSession.status === "authenticated" ? adminSession.user : null;
+  const teacherUser = adminUser?.role === "teacher" ? adminUser : null;
+  const authError = adminSession.status === "error" ? adminSession.message : undefined;
 
-  // Monitor session validity
+  // Monitor the independent student session; admin and teacher sessions use Firebase Auth.
   useEffect(() => {
     const interval = setInterval(() => {
-      // Check student session validity
       const currStudent = studentService.getCurrentSession();
       if (!currStudent && studentSession) {
         setStudentSession(null);
       }
-
-      // Check teacher session validity
-      const currAdmin = adminService.getCurrentSessionUser();
-      if ((!currAdmin || currAdmin.role !== "teacher") && teacherUser) {
-        setTeacherUser(null);
-      }
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [studentSession, teacherUser]);
+  }, [studentSession]);
+
+  const handleAdminLoginSuccess = (user: UserAccount) => {
+    adminService.setFirebaseSessionUser(user);
+    setPortalMode(user.role === "teacher" ? "teacher" : "admin");
+    scrollToTop();
+  };
+
+  const renderTeacherPortal = () => (
+    <TeacherPortal
+      currentUser={teacherUser!}
+      onLogout={signOutAdmin}
+      onBackToPublic={() => {
+        setPortalMode("public");
+        scrollToTop();
+      }}
+    />
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,8 +84,14 @@ export default function App() {
 
   // 1. CỔNG QUẢN TRỊ NHÀ TRƯỜNG (Admin Portal)
   if (portalMode === "admin") {
+    if (teacherUser) return renderTeacherPortal();
     return (
       <AdminPortal
+        currentUser={adminUser}
+        authLoading={adminSession.status === "loading"}
+        authError={authError}
+        onLoginSuccess={handleAdminLoginSuccess}
+        onLogout={signOutAdmin}
         onBackToPublic={() => {
           setPortalMode("public");
           scrollToTop();
@@ -89,9 +106,13 @@ export default function App() {
       return (
         <StudentPortal
           session={studentSession}
-          onLogout={() => {
-            studentService.logout();
-            setStudentSession(null);
+          onLogout={async () => {
+            try {
+              await studentService.logout();
+              setStudentSession(null);
+            } catch (error) {
+              window.alert(error instanceof Error ? error.message : "Không thể đăng xuất.");
+            }
           }}
           onBackToPublic={() => {
             setPortalMode("public");
@@ -116,40 +137,15 @@ export default function App() {
 
   // 3. CỔNG GIÁO VIÊN (Teacher Portal & Login)
   if (portalMode === "teacher") {
-    if (teacherUser && teacherUser.role === "teacher") {
-      return (
-        <TeacherPortal
-          currentUser={teacherUser}
-          onLogout={() => {
-            try {
-              adminService.logout();
-              setTeacherUser(null);
-            } catch (error) {
-              alert(error instanceof Error ? error.message : "Không thể xác minh đã đăng xuất an toàn.");
-            }
-          }}
-          onBackToPublic={() => {
-            setPortalMode("public");
-            scrollToTop();
-          }}
-        />
-      );
-    }
+    if (teacherUser) return renderTeacherPortal();
     return (
       <AdminLogin
-        onLoginSuccess={(user) => {
-          if (user.role === "teacher") {
-            setTeacherUser(user);
-          } else {
-            // If logged in as super_admin, switch to admin portal
-            setPortalMode("admin");
-          }
-          scrollToTop();
-        }}
+        onLoginSuccess={handleAdminLoginSuccess}
         onBackToPublic={() => {
           setPortalMode("public");
           scrollToTop();
         }}
+        authError={authError}
       />
     );
   }
@@ -161,7 +157,7 @@ export default function App() {
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenAdmin={() => setPortalMode("admin")}
+        onOpenAdmin={() => setPortalMode(teacherUser ? "teacher" : "admin")}
         onOpenStudent={() => setPortalMode("student")}
         onOpenTeacher={() => setPortalMode("teacher")}
         onOpenTestRunner={() => setIsTestRunnerOpen(true)}

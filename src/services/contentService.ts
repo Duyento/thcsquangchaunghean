@@ -9,8 +9,13 @@ import {
   AdminPermission,
 } from "../types/adminTypes";
 import { OFFICIAL_QUESTIONS, OFFICIAL_TOPICS } from "../data/officialData";
+import { resolveSiteImageUrl, siteImages } from "../assets/siteImages";
 import { adminService } from "./adminService";
 import * as XLSX from "xlsx";
+import {
+  assertStorageWriteLockClear,
+  withLocalStorageWriteLock,
+} from "./storageWriteLock";
 
 const STORAGE_KEY_QUESTIONS = "thcs_quang_chau_content_questions";
 const STORAGE_KEY_POSTS = "thcs_quang_chau_content_posts";
@@ -45,7 +50,7 @@ const INITIAL_POSTS: ArticlePost[] = [
     id: "post-1",
     title: "Bình Đẳng Giới – Không Giới Hạn Ước Mơ: Hành Trình Tỏa Sáng Của Học Sinh THCS Quảng Châu",
     summary: "Nhìn lại hành trình lan tỏa nhận thức bình đẳng giới, phá bỏ định kiến và mở rộng cơ hội học tập, nghiên cứu sáng tạo tại Trường THCS Quảng Châu.",
-    coverImage: "/src/assets/images/hero_gender_equality_1794298223798.jpg",
+    coverImage: siteImages.hero,
     topicId: 1,
     topicTitle: "Hiểu đúng về bình đẳng giới",
     author: "Thầy Lê Văn Hùng & Đội Tuyên Truyền Măng Non",
@@ -66,7 +71,7 @@ const INITIAL_POSTS: ArticlePost[] = [
     id: "post-2",
     title: "Nữ Sinh Với Giấc Mơ STEM & Công Nghệ Số: Phá Vỡ Mọi Rào Cản Định Kiến",
     summary: "Câu chuyện truyền cảm hứng từ câu lạc bộ khoa học kỹ thuật trường THCS Quảng Châu, nơi các bạn nữ sinh tự tin lắp ráp robot và lập trình sáng tạo.",
-    coverImage: "/src/assets/images/stem_and_dreams_1794298224995.jpg",
+    coverImage: siteImages.stem,
     topicId: 2,
     topicTitle: "Bình đẳng giới trong học tập",
     author: "Cô Nguyễn Thị Mai & Nhóm Nữ Sinh STEM 8C1",
@@ -86,7 +91,7 @@ const INITIAL_POSTS: ArticlePost[] = [
     id: "post-3",
     title: "Gia Đình Hạnh Phúc: Khi Việc Nhà Là Niềm Vui Sẻ Chia",
     summary: "Hướng dẫn các bạn học sinh cách xây dựng thời gian biểu chia sẻ công việc nhà hợp lý, thể hiện lòng hiếu thảo và tình yêu thương đối với cha mẹ.",
-    coverImage: "/src/assets/images/youth_action_campaign_1794298224215.jpg",
+    coverImage: siteImages.campaign,
     topicId: 3,
     topicTitle: "Bình đẳng giới trong gia đình",
     author: "Thầy Phan Đình Trí (Tổ KHTN & Kỹ năng sống)",
@@ -113,7 +118,7 @@ const INITIAL_VIDEOS: MediaVideoItem[] = [
     topicTitle: "Bình đẳng giới trong lựa chọn nghề nghiệp",
     videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     youtubeId: "dQw4w9WgXcQ",
-    thumbnailUrl: "/src/assets/images/hero_gender_equality_1794298223798.jpg",
+    thumbnailUrl: siteImages.hero,
     presenter: "Chi đội 8C1 & Câu lạc bộ Truyền thông Măng Non",
     duration: "06:45",
     status: "published",
@@ -129,7 +134,7 @@ const INITIAL_VIDEOS: MediaVideoItem[] = [
     topicTitle: "Bình đẳng giới trong môi trường số",
     videoUrl: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
     youtubeId: "ScMzIvxBSi4",
-    thumbnailUrl: "/src/assets/images/stem_and_dreams_1794298224995.jpg",
+    thumbnailUrl: siteImages.stem,
     presenter: "Ban Giám Hiệu & Đoàn Đội THCS Quảng Châu",
     duration: "12:30",
     status: "published",
@@ -178,7 +183,7 @@ const INITIAL_IMAGES: GalleryImageItem[] = [
     sourceCredit: "Ban Truyền Thông THCS Quảng Châu",
     topicId: 6,
     topicTitle: "Hành động vì môi trường bình đẳng",
-    imageUrl: "/src/assets/images/youth_action_campaign_1794298224215.jpg",
+    imageUrl: siteImages.campaign,
     format: "jpg",
     fileSizeKb: 340,
     status: "published",
@@ -195,7 +200,7 @@ const INITIAL_IMAGES: GalleryImageItem[] = [
     sourceCredit: "CLB STEM & Sáng Tạo Trẻ",
     topicId: 2,
     topicTitle: "Bình đẳng giới trong học tập",
-    imageUrl: "/src/assets/images/stem_and_dreams_1794298224995.jpg",
+    imageUrl: siteImages.stem,
     format: "jpg",
     fileSizeKb: 412,
     status: "published",
@@ -212,7 +217,7 @@ const INITIAL_IMAGES: GalleryImageItem[] = [
     sourceCredit: "Chi đội 7A1 - THCS Quảng Châu",
     topicId: 1,
     topicTitle: "Hiểu đúng về bình đẳng giới",
-    imageUrl: "/src/assets/images/hero_gender_equality_1794298223798.jpg",
+    imageUrl: siteImages.hero,
     format: "jpg",
     fileSizeKb: 395,
     status: "published",
@@ -241,12 +246,14 @@ class ContentService {
   private setStorage<T>(key: string, value: T): void {
     try {
       if (typeof window !== "undefined" && typeof window.localStorage !== "undefined") {
+        assertStorageWriteLockClear();
         window.localStorage.setItem(key, JSON.stringify(value));
       } else {
         this.memoryStorage[key] = JSON.stringify(value);
       }
     } catch (e) {
       console.error("Content Storage write error:", e);
+      throw e instanceof Error ? e : new Error("Không thể ghi dữ liệu nội dung.");
     }
   }
 
@@ -271,7 +278,7 @@ class ContentService {
     if (id) {
       return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
     }
-    return "/src/assets/images/hero_gender_equality_1794298223798.jpg";
+    return siteImages.hero;
   }
 
   // Security file validator: Blocks dangerous executables (.exe, .bat, .sh, .cmd, .js, .msi, etc.)
@@ -309,18 +316,25 @@ class ContentService {
   // ==================== 1. QUESTIONS BANK MANAGEMENT ====================
   getQuestions(actor?: UserAccount | null): ManageableQuestion[] {
     const list = this.getStorage<ManageableQuestion[]>(STORAGE_KEY_QUESTIONS, INITIAL_QUESTIONS);
+    const resolved = list.map((question) => question.imageUrl
+      ? { ...question, imageUrl: resolveSiteImageUrl(question.imageUrl) }
+      : question);
     if (!actor) {
       // Public view: only published questions
-      return list.filter((q) => q.status === "published");
+      return resolved.filter((q) => q.status === "published");
     }
-    return list;
+    return resolved;
   }
 
   getPublicQuestions(): ManageableQuestion[] {
     return this.getQuestions(null);
   }
 
-  createQuestion(
+  createQuestion(...args: Parameters<ContentService["createQuestionUnlocked"]>): Promise<ReturnType<ContentService["createQuestionUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.createQuestionUnlocked(...args));
+  }
+
+  private createQuestionUnlocked(
     actor: UserAccount,
     data: {
       topicId: number;
@@ -379,7 +393,11 @@ class ContentService {
     return { success: true, question: newQuestion };
   }
 
-  updateQuestion(
+  updateQuestion(...args: Parameters<ContentService["updateQuestionUnlocked"]>): Promise<ReturnType<ContentService["updateQuestionUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.updateQuestionUnlocked(...args));
+  }
+
+  private updateQuestionUnlocked(
     actor: UserAccount,
     id: string,
     updates: Partial<ManageableQuestion>
@@ -430,7 +448,11 @@ class ContentService {
     return { success: true, question: target };
   }
 
-  duplicateQuestion(
+  duplicateQuestion(...args: Parameters<ContentService["duplicateQuestionUnlocked"]>): Promise<ReturnType<ContentService["duplicateQuestionUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.duplicateQuestionUnlocked(...args));
+  }
+
+  private duplicateQuestionUnlocked(
     actor: UserAccount,
     id: string
   ): { success: boolean; question?: ManageableQuestion; error?: string } {
@@ -468,7 +490,11 @@ class ContentService {
     return { success: true, question: cloned };
   }
 
-  deleteQuestion(actor: UserAccount, id: string): { success: boolean; error?: string } {
+  deleteQuestion(...args: Parameters<ContentService["deleteQuestionUnlocked"]>): Promise<ReturnType<ContentService["deleteQuestionUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.deleteQuestionUnlocked(...args));
+  }
+
+  private deleteQuestionUnlocked(actor: UserAccount, id: string): { success: boolean; error?: string } {
     this.assertContentPermission(actor, "manage_questions");
 
     const questions = this.getQuestions(actor);
@@ -519,7 +545,11 @@ class ContentService {
     XLSX.writeFile(workbook, "Ngan_hang_cau_hoi_THCS_Quang_Chau.xlsx");
   }
 
-  importQuestionsJSON(actor: UserAccount, jsonStr: string): { success: boolean; count?: number; error?: string } {
+  importQuestionsJSON(...args: Parameters<ContentService["importQuestionsJSONUnlocked"]>): Promise<ReturnType<ContentService["importQuestionsJSONUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.importQuestionsJSONUnlocked(...args));
+  }
+
+  private importQuestionsJSONUnlocked(actor: UserAccount, jsonStr: string): { success: boolean; count?: number; error?: string } {
     this.assertContentPermission(actor, "manage_questions");
     try {
       const data = JSON.parse(jsonStr);
@@ -578,17 +608,25 @@ class ContentService {
   // ==================== 2. ARTICLES & POSTS MANAGEMENT ====================
   getPosts(actor?: UserAccount | null): ArticlePost[] {
     const list = this.getStorage<ArticlePost[]>(STORAGE_KEY_POSTS, INITIAL_POSTS);
+    const resolved = list.map((post) => ({
+      ...post,
+      coverImage: resolveSiteImageUrl(post.coverImage),
+    }));
     if (!actor) {
-      return list.filter((p) => p.status === "published");
+      return resolved.filter((p) => p.status === "published");
     }
-    return list;
+    return resolved;
   }
 
   getPublicPosts(): ArticlePost[] {
     return this.getPosts(null);
   }
 
-  createPost(
+  createPost(...args: Parameters<ContentService["createPostUnlocked"]>): Promise<ReturnType<ContentService["createPostUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.createPostUnlocked(...args));
+  }
+
+  private createPostUnlocked(
     actor: UserAccount,
     data: {
       title: string;
@@ -620,7 +658,7 @@ class ContentService {
       title: data.title.trim(),
       summary: data.summary.trim() || data.title.trim(),
       content: data.content,
-      coverImage: data.coverImage.trim() || "/src/assets/images/hero_gender_equality_1794298223798.jpg",
+      coverImage: data.coverImage.trim() || siteImages.hero,
       topicId: topic.id,
       topicTitle: topic.title,
       author: data.author?.trim() || actor.fullName,
@@ -643,7 +681,11 @@ class ContentService {
     return { success: true, post: newPost };
   }
 
-  updatePost(
+  updatePost(...args: Parameters<ContentService["updatePostUnlocked"]>): Promise<ReturnType<ContentService["updatePostUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.updatePostUnlocked(...args));
+  }
+
+  private updatePostUnlocked(
     actor: UserAccount,
     id: string,
     updates: Partial<ArticlePost>
@@ -686,7 +728,11 @@ class ContentService {
     return { success: true, post: target };
   }
 
-  deletePost(actor: UserAccount, id: string): { success: boolean; error?: string } {
+  deletePost(...args: Parameters<ContentService["deletePostUnlocked"]>): Promise<ReturnType<ContentService["deletePostUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.deletePostUnlocked(...args));
+  }
+
+  private deletePostUnlocked(actor: UserAccount, id: string): { success: boolean; error?: string } {
     this.assertContentPermission(actor, "manage_posts");
 
     const posts = this.getPosts(actor);
@@ -703,17 +749,24 @@ class ContentService {
   // ==================== 3. VIDEOS MANAGEMENT ====================
   getVideos(actor?: UserAccount | null): MediaVideoItem[] {
     const list = this.getStorage<MediaVideoItem[]>(STORAGE_KEY_VIDEOS, INITIAL_VIDEOS);
+    const resolved = list.map((video) => video.thumbnailUrl
+      ? { ...video, thumbnailUrl: resolveSiteImageUrl(video.thumbnailUrl) }
+      : video);
     if (!actor) {
-      return list.filter((v) => v.status === "published");
+      return resolved.filter((v) => v.status === "published");
     }
-    return list;
+    return resolved;
   }
 
   getPublicVideos(): MediaVideoItem[] {
     return this.getVideos(null);
   }
 
-  createVideo(
+  createVideo(...args: Parameters<ContentService["createVideoUnlocked"]>): Promise<ReturnType<ContentService["createVideoUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.createVideoUnlocked(...args));
+  }
+
+  private createVideoUnlocked(
     actor: UserAccount,
     data: {
       title: string;
@@ -735,7 +788,7 @@ class ContentService {
     const videos = this.getVideos(actor);
     const topic = OFFICIAL_TOPICS.find((t) => t.id === data.topicId) || OFFICIAL_TOPICS[0];
     const youtubeId = this.extractYouTubeId(data.videoUrl);
-    const thumb = data.thumbnailUrl?.trim() || (youtubeId ? this.getYouTubeThumbnail(data.videoUrl) : "/src/assets/images/stem_and_dreams_1794298224995.jpg");
+    const thumb = data.thumbnailUrl?.trim() || (youtubeId ? this.getYouTubeThumbnail(data.videoUrl) : siteImages.stem);
 
     const now = new Date().toISOString();
     let initialStatus: ContentStatus = data.status || "draft";
@@ -772,7 +825,11 @@ class ContentService {
     return { success: true, video: newVideo };
   }
 
-  updateVideo(
+  updateVideo(...args: Parameters<ContentService["updateVideoUnlocked"]>): Promise<ReturnType<ContentService["updateVideoUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.updateVideoUnlocked(...args));
+  }
+
+  private updateVideoUnlocked(
     actor: UserAccount,
     id: string,
     updates: Partial<MediaVideoItem>
@@ -823,7 +880,11 @@ class ContentService {
     return { success: true, video: target };
   }
 
-  deleteVideo(actor: UserAccount, id: string): { success: boolean; error?: string } {
+  deleteVideo(...args: Parameters<ContentService["deleteVideoUnlocked"]>): Promise<ReturnType<ContentService["deleteVideoUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.deleteVideoUnlocked(...args));
+  }
+
+  private deleteVideoUnlocked(actor: UserAccount, id: string): { success: boolean; error?: string } {
     this.assertContentPermission(actor, "manage_videos");
 
     const videos = this.getVideos(actor);
@@ -842,7 +903,11 @@ class ContentService {
     return this.getStorage<ImageAlbum[]>(STORAGE_KEY_ALBUMS, INITIAL_ALBUMS);
   }
 
-  createAlbum(
+  createAlbum(...args: Parameters<ContentService["createAlbumUnlocked"]>): Promise<ReturnType<ContentService["createAlbumUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.createAlbumUnlocked(...args));
+  }
+
+  private createAlbumUnlocked(
     actor: UserAccount,
     name: string,
     description: string,
@@ -870,7 +935,10 @@ class ContentService {
 
   getImages(actor?: UserAccount | null, albumIdFilter?: string): GalleryImageItem[] {
     const list = this.getStorage<GalleryImageItem[]>(STORAGE_KEY_IMAGES, INITIAL_IMAGES);
-    let filtered = list;
+    let filtered = list.map((image) => ({
+      ...image,
+      imageUrl: resolveSiteImageUrl(image.imageUrl),
+    }));
     if (!actor) {
       filtered = filtered.filter((i) => i.status === "published");
     }
@@ -884,7 +952,11 @@ class ContentService {
     return this.getImages(null);
   }
 
-  createImage(
+  createImage(...args: Parameters<ContentService["createImageUnlocked"]>): Promise<ReturnType<ContentService["createImageUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.createImageUnlocked(...args));
+  }
+
+  private createImageUnlocked(
     actor: UserAccount,
     data: {
       albumId: string;
@@ -945,7 +1017,11 @@ class ContentService {
     return { success: true, image: newImg };
   }
 
-  deleteImage(actor: UserAccount, id: string): { success: boolean; error?: string } {
+  deleteImage(...args: Parameters<ContentService["deleteImageUnlocked"]>): Promise<ReturnType<ContentService["deleteImageUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.deleteImageUnlocked(...args));
+  }
+
+  private deleteImageUnlocked(actor: UserAccount, id: string): { success: boolean; error?: string } {
     this.assertContentPermission(actor, "manage_images");
 
     const images = this.getImages(actor);
@@ -960,7 +1036,11 @@ class ContentService {
   }
 
   // ==================== 5. APPROVAL WORKFLOW ====================
-  changeContentStatus(
+  changeContentStatus(...args: Parameters<ContentService["changeContentStatusUnlocked"]>): Promise<ReturnType<ContentService["changeContentStatusUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.changeContentStatusUnlocked(...args));
+  }
+
+  private changeContentStatusUnlocked(
     actor: UserAccount,
     type: "question" | "post" | "video" | "image",
     id: string,
@@ -1113,10 +1193,12 @@ class ContentService {
       };
       const updated = [newLog, ...logs].slice(0, 500);
       if (typeof window !== "undefined" && typeof window.localStorage !== "undefined") {
+        assertStorageWriteLockClear();
         window.localStorage.setItem("thcs_quang_chau_admin_logs", JSON.stringify(updated));
       }
     } catch (e) {
       console.warn("Log forward notice:", e);
+      throw e instanceof Error ? e : new Error("Không thể ghi nhật ký nội dung.");
     }
   }
 }

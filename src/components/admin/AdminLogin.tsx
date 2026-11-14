@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { adminService } from "../../services/adminService";
+import { getAdminAuthService } from "../../services/firebaseAdminAuthService";
 import { UserAccount } from "../../types/adminTypes";
 import { ShieldCheck, Lock, Mail, AlertCircle, ArrowLeft } from "lucide-react";
 
 interface AdminLoginProps {
   onLoginSuccess: (user: UserAccount) => void;
   onBackToPublic: () => void;
+  authError?: string;
 }
 
-export default function AdminLogin({ onLoginSuccess, onBackToPublic }: AdminLoginProps) {
+export default function AdminLogin({ onLoginSuccess, onBackToPublic, authError }: AdminLoginProps) {
   // Login form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,14 +23,11 @@ export default function AdminLogin({ onLoginSuccess, onBackToPublic }: AdminLogi
     setIsSubmitting(true);
 
     try {
-      const res = await adminService.authenticate(email, password);
-      if (res.success && res.user) {
-        onLoginSuccess(res.user);
-      } else {
-        setLoginError(res.error || "Đăng nhập thất bại.");
-      }
-    } catch {
-      setLoginError("Đã xảy ra lỗi trong quá trình xác thực.");
+      const user = await getAdminAuthService().signIn(email, password);
+      setPassword("");
+      onLoginSuccess(user);
+    } catch (error) {
+      setLoginError(error instanceof Error ? error.message : "Không thể xác thực qua Firebase Auth.");
     } finally {
       setIsSubmitting(false);
     }
@@ -75,10 +73,10 @@ export default function AdminLogin({ onLoginSuccess, onBackToPublic }: AdminLogi
               </p>
             </div>
 
-            {loginError && (
+            {(loginError || authError) && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{loginError}</span>
+                <span>{loginError || authError}</span>
               </div>
             )}
 
@@ -93,7 +91,7 @@ export default function AdminLogin({ onLoginSuccess, onBackToPublic }: AdminLogi
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@thcsquangchau.edu.vn"
+                  placeholder="name@example.test"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -114,7 +112,7 @@ export default function AdminLogin({ onLoginSuccess, onBackToPublic }: AdminLogi
               </div>
 
               <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-                <span>Thời hạn phiên: 60 phút</span>
+                <span>Phiên đăng nhập: chỉ trong tab hiện tại</span>
               </div>
 
               <button

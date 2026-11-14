@@ -27,7 +27,7 @@ export default function TeachersTab({ currentUser }: TeachersTabProps) {
     setTeachers(adminService.getTeachers(currentUser));
   };
 
-  const handleAddTeacher = (e: React.FormEvent) => {
+  const handleAddTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
 
@@ -36,13 +36,19 @@ export default function TeachersTab({ currentUser }: TeachersTabProps) {
       return;
     }
 
-    const res = adminService.createTeacher(currentUser, {
-      fullName: fullName.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      subject: subject.trim(),
-      homeroomClassId: homeroomClassId || undefined,
-    });
+    let res;
+    try {
+      res = await adminService.createTeacher(currentUser, {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        subject: subject.trim(),
+        homeroomClassId: homeroomClassId || undefined,
+      });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể thêm giáo viên.");
+      return;
+    }
 
     if (res.success) {
       refreshList();

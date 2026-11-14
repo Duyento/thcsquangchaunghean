@@ -13,6 +13,10 @@ import {
 } from "../types/competitionTypes";
 import { UserAccount } from "../types/adminTypes";
 import * as XLSX from "xlsx";
+import {
+  assertStorageWriteLockClear,
+  withLocalStorageWriteLock,
+} from "./storageWriteLock";
 
 const EMPTY_DATA: CompetitionData = {
   schemaVersion: 1,
@@ -125,6 +129,7 @@ class CompetitionService {
     }
 
     try {
+      assertStorageWriteLockClear();
       window.localStorage.setItem(COMPETITION_STORAGE_KEY, serialized);
       if (window.localStorage.getItem(COMPETITION_STORAGE_KEY) !== serialized) {
         throw new Error("Dữ liệu đọc lại không khớp sau khi ghi.");
@@ -134,6 +139,7 @@ class CompetitionService {
       const writeReason = writeError instanceof Error ? writeError.message : "lỗi lưu trữ không xác định";
       let rollbackError: unknown;
       try {
+        assertStorageWriteLockClear();
         if (snapshot === null) window.localStorage.removeItem(COMPETITION_STORAGE_KEY);
         else window.localStorage.setItem(COMPETITION_STORAGE_KEY, snapshot);
       } catch (error) {
@@ -168,11 +174,15 @@ class CompetitionService {
       changed = true;
       return { ...competition, status, updatedAt: new Date().toISOString() };
     });
-    if (changed) this.writeData(data);
+    void changed;
     return data;
   }
 
-  createCompetition(
+  createCompetition(...args: Parameters<CompetitionService["createCompetitionUnlocked"]>): Promise<ReturnType<CompetitionService["createCompetitionUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.createCompetitionUnlocked(...args));
+  }
+
+  private createCompetitionUnlocked(
     actor: UserAccount,
     input: Omit<Competition, "id" | "schoolId" | "createdAt" | "updatedAt" | "archivedAt" | "status">
   ): Competition {
@@ -193,7 +203,11 @@ class CompetitionService {
     return competition;
   }
 
-  updateCompetition(actor: UserAccount, id: string, input: Omit<Competition, "id" | "schoolId" | "createdAt" | "updatedAt" | "archivedAt" | "status">): Competition {
+  updateCompetition(...args: Parameters<CompetitionService["updateCompetitionUnlocked"]>): Promise<ReturnType<CompetitionService["updateCompetitionUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.updateCompetitionUnlocked(...args));
+  }
+
+  private updateCompetitionUnlocked(actor: UserAccount, id: string, input: Omit<Competition, "id" | "schoolId" | "createdAt" | "updatedAt" | "archivedAt" | "status">): Competition {
     this.requireSuperAdmin(actor);
     this.validateCompetitionInput(input);
     const data = this.readData();
@@ -212,17 +226,29 @@ class CompetitionService {
     return updated;
   }
 
-  closeCompetition(actor: UserAccount, competitionId: string): Competition {
+  closeCompetition(...args: Parameters<CompetitionService["closeCompetitionUnlocked"]>): Promise<ReturnType<CompetitionService["closeCompetitionUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.closeCompetitionUnlocked(...args));
+  }
+
+  private closeCompetitionUnlocked(actor: UserAccount, competitionId: string): Competition {
     return this.changeStatus(actor, competitionId, "ended");
   }
 
-  archiveCompetition(actor: UserAccount, competitionId: string, confirmed: boolean): Competition {
+  archiveCompetition(...args: Parameters<CompetitionService["archiveCompetitionUnlocked"]>): Promise<ReturnType<CompetitionService["archiveCompetitionUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.archiveCompetitionUnlocked(...args));
+  }
+
+  private archiveCompetitionUnlocked(actor: UserAccount, competitionId: string, confirmed: boolean): Competition {
     this.requireSuperAdmin(actor);
     if (!confirmed) throw new Error("Cần xác nhận trước khi khóa kết quả và lưu trữ cuộc thi.");
     return this.changeStatus(actor, competitionId, "archived");
   }
 
-  addContestant(actor: UserAccount, competitionId: string, input: { fullName: string; className?: string; sourceStudentId?: string }): CompetitionContestant {
+  addContestant(...args: Parameters<CompetitionService["addContestantUnlocked"]>): Promise<ReturnType<CompetitionService["addContestantUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.addContestantUnlocked(...args));
+  }
+
+  private addContestantUnlocked(actor: UserAccount, competitionId: string, input: { fullName: string; className?: string; sourceStudentId?: string }): CompetitionContestant {
     this.requireSuperAdmin(actor);
     const data = this.readData();
     const competition = this.requireEditableCompetition(data, competitionId);
@@ -297,7 +323,11 @@ class CompetitionService {
     return { rows: preview, validCount, invalidCount };
   }
 
-  importContestants(actor: UserAccount, competitionId: string, rows: ContestantImportRow[]): CompetitionContestant[] {
+  importContestants(...args: Parameters<CompetitionService["importContestantsUnlocked"]>): Promise<ReturnType<CompetitionService["importContestantsUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.importContestantsUnlocked(...args));
+  }
+
+  private importContestantsUnlocked(actor: UserAccount, competitionId: string, rows: ContestantImportRow[]): CompetitionContestant[] {
     this.requireSuperAdmin(actor);
     const preview = this.previewContestantImport(actor, competitionId, rows);
     if (preview.invalidCount > 0) {
@@ -326,18 +356,26 @@ class CompetitionService {
     return contestants;
   }
 
-  addLinkedStudent(actor: UserAccount, competitionId: string, studentId: string): CompetitionContestant {
+  addLinkedStudent(...args: Parameters<CompetitionService["addLinkedStudentUnlocked"]>): Promise<ReturnType<CompetitionService["addLinkedStudentUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.addLinkedStudentUnlocked(...args));
+  }
+
+  private addLinkedStudentUnlocked(actor: UserAccount, competitionId: string, studentId: string): CompetitionContestant {
     this.requireSuperAdmin(actor);
     const student = adminService.getStudents(actor).find((item) => item.id === studentId);
     if (!student) throw new Error("Không tìm thấy học sinh hiện có.");
-    return this.addContestant(actor, competitionId, {
+    return this.addContestantUnlocked(actor, competitionId, {
       fullName: student.fullName,
       className: student.className,
       sourceStudentId: student.id,
     });
   }
 
-  saveSubmission(
+  saveSubmission(...args: Parameters<CompetitionService["saveSubmissionUnlocked"]>): Promise<ReturnType<CompetitionService["saveSubmissionUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.saveSubmissionUnlocked(...args));
+  }
+
+  private saveSubmissionUnlocked(
     actor: UserAccount,
     competitionId: string,
     contestantId: string,
@@ -391,7 +429,11 @@ class CompetitionService {
     return submission;
   }
 
-  addSubmission(actor: UserAccount, competitionId: string, contestantId: string): CompetitionSubmission {
+  addSubmission(...args: Parameters<CompetitionService["addSubmissionUnlocked"]>): Promise<ReturnType<CompetitionService["addSubmissionUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.addSubmissionUnlocked(...args));
+  }
+
+  private addSubmissionUnlocked(actor: UserAccount, competitionId: string, contestantId: string): CompetitionSubmission {
     this.requireSuperAdmin(actor);
     const data = this.readData();
     const competition = this.requireEditableCompetition(data, competitionId);
@@ -481,7 +523,11 @@ class CompetitionService {
     return isCompetitionData(value);
   }
 
-  restoreBackupData(value: unknown): void {
+  restoreBackupData(value: unknown): Promise<void> {
+    return withLocalStorageWriteLock(() => this.restoreBackupDataUnlocked(value));
+  }
+
+  private restoreBackupDataUnlocked(value: unknown): void {
     if (!isCompetitionData(value)) throw new Error("Dữ liệu cuộc thi trong backup không hợp lệ.");
     this.writeData(value);
   }

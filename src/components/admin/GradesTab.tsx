@@ -5,11 +5,12 @@ import { Layers, School, Users, ArrowRight } from "lucide-react";
 
 interface GradesTabProps {
   currentUser?: UserAccount;
-  onSelectGrade?: (gradeLevel: number) => void;
+  onSelectGrade?: (grade: Grade) => void;
 }
 
 export default function GradesTab({ currentUser: _currentUser, onSelectGrade }: GradesTabProps) {
-  const [grades] = useState<Grade[]>(adminService.getGrades());
+  const school = adminService.getSchool();
+  const [grades] = useState<Grade[]>(() => adminService.getGrades(school.id, school.academicYear));
   const classes: SchoolClass[] = adminService.getClasses();
 
   return (
@@ -20,7 +21,7 @@ export default function GradesTab({ currentUser: _currentUser, onSelectGrade }: 
             Quản Lý Khối Học (Cấp THCS)
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Các khối đào tạo chính thức: Khối 6, Khối 7, Khối 8, Khối 9 · Năm học 2025-2026
+            Các khối đào tạo chính thức · Năm học {school.academicYear}
           </p>
         </div>
       </div>
@@ -28,7 +29,11 @@ export default function GradesTab({ currentUser: _currentUser, onSelectGrade }: 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {grades.map((grade) => {
           const gradeClasses = classes.filter(
-            (c) => c.gradeLevel === grade.level && c.status !== "archived"
+            (c) =>
+              c.schoolId === grade.schoolId
+              && c.academicYear === grade.academicYear
+              && c.gradeId === grade.id
+              && c.status !== "archived"
           );
           const totalStudents = gradeClasses.reduce(
             (sum, c) => sum + (c.studentCount || 0),
@@ -37,7 +42,7 @@ export default function GradesTab({ currentUser: _currentUser, onSelectGrade }: 
 
           return (
             <div
-              key={grade.id}
+              key={`${grade.schoolId}:${grade.academicYear}:${grade.id}`}
               className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4 hover:border-teal-400 transition-colors"
             >
               <div className="flex items-center justify-between">
@@ -90,7 +95,7 @@ export default function GradesTab({ currentUser: _currentUser, onSelectGrade }: 
 
               <div className="pt-2 flex justify-end">
                 <button
-                  onClick={() => onSelectGrade?.(grade.level)}
+                  onClick={() => onSelectGrade?.(grade)}
                   className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
                 >
                   <span>Xem & quản lý lớp Khối {grade.level}</span>

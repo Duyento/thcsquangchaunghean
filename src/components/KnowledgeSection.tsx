@@ -27,12 +27,12 @@ export default function KnowledgeSection({ setActiveTab }: KnowledgeSectionProps
     <div className="space-y-12 py-6 pb-20">
       {/* Header Banner */}
       <div className="text-center max-w-3xl mx-auto space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-bold">
           <Compass className="w-3.5 h-3.5" />
-          <span>Chuyên mục 2: Tri thức nền tảng</span>
+          <span>Kiến thức nền tảng</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Hiểu Đúng Về Bình Đẳng Giới
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-ink">
+          Kiến thức về bình đẳng giới
         </h1>
         <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
           Trang bị kiến thức khoa học, chuẩn xác từ Luật Bình đẳng giới Việt Nam và các tài liệu giáo dục quốc tế, giúp học sinh THCS tự tin nhận diện và đẩy lùi mọi định kiến.

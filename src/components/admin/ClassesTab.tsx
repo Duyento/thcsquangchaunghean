@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { adminService } from "../../services/adminService";
-import { SchoolClass, UserAccount, Teacher } from "../../types/adminTypes";
+import { Grade, SchoolClass, UserAccount, Teacher } from "../../types/adminTypes";
 import * as XLSX from "xlsx";
 import {
   School,
@@ -8,9 +8,11 @@ import {
   Search,
   Filter,
   Edit2,
+  Eye,
   Lock,
   Unlock,
   Archive,
+  Trash2,
   UserCheck,
   AlertCircle,
   CheckCircle2,
@@ -24,25 +26,39 @@ import {
 
 interface ClassesTabProps {
   currentUser: UserAccount;
-  initialGradeFilter?: number;
+  initialGradeFilter?: Pick<Grade, "schoolId" | "academicYear" | "id" | "level">;
 }
 
+function gradeScopeKey(grade: Pick<Grade, "schoolId" | "academicYear" | "id">): string {
+  return JSON.stringify([grade.schoolId, grade.academicYear, grade.id]);
+}
+
+type ClassAction = {
+  action: "archive" | "restore" | "delete";
+  schoolClass: SchoolClass;
+  studentCount: number;
+};
+
 export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesTabProps) {
+  const school = adminService.getSchool();
   const [classes, setClasses] = useState<SchoolClass[]>(adminService.getClasses());
-  const [teachers] = useState<Teacher[]>(adminService.getTeachers());
+  const [teachers, setTeachers] = useState<Teacher[]>(adminService.getTeachers());
+  const grades = adminService.getGradesForSchool(school.id);
   const [searchQuery, setSearchQuery] = useState("");
   const [gradeFilter, setGradeFilter] = useState<string>(
-    initialGradeFilter ? String(initialGradeFilter) : "all"
+    initialGradeFilter ? gradeScopeKey(initialGradeFilter) : "all"
   );
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Modals state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingClass, setEditingClass] = useState<SchoolClass | null>(null);
+  const [classDetails, setClassDetails] = useState<SchoolClass | null>(null);
+  const [pendingClassAction, setPendingClassAction] = useState<ClassAction | null>(null);
 
   // Form states
   const [newClassName, setNewClassName] = useState("");
-  const [newGradeLevel, setNewGradeLevel] = useState<6 | 7 | 8 | 9>(6);
+  const [newGradeScope, setNewGradeScope] = useState("");
   const [newTeacherId, setNewTeacherId] = useState("");
   const [newRoomNumber, setNewRoomNumber] = useState("");
   const [newAccessCode, setNewAccessCode] = useState("");
@@ -51,9 +67,19 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const canManageClasses = adminService.hasPermission(currentUser, "manage_classes");
+  const selectedGrade = grades.find((grade) => gradeScopeKey(grade) === gradeFilter);
+  const formGrades = editingClass
+    ? grades.filter(
+      (grade) =>
+        grade.schoolId === editingClass.schoolId
+        && grade.academicYear === editingClass.academicYear
+    )
+    : adminService.getGrades(school.id, school.academicYear);
+  const selectedFormGrade = formGrades.find((grade) => gradeScopeKey(grade) === newGradeScope);
 
   const refreshList = () => {
     setClasses(adminService.getClasses());
+    setTeachers(adminService.getTeachers());
   };
 
   const handleCopyCode = (id: string, code: string) => {
@@ -85,12 +111,21 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
     const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (c.homeroomTeacherName && c.homeroomTeacherName.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (c.accessCode && c.accessCode.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesGrade = gradeFilter === "all" || String(c.gradeLevel) === gradeFilter;
+    const matchesGrade = gradeFilter === "all" || Boolean(
+      selectedGrade
+      && c.schoolId === selectedGrade.schoolId
+      && c.academicYear === selectedGrade.academicYear
+      && c.gradeId === selectedGrade.id
+      && c.gradeLevel === selectedGrade.level
+    );
     const matchesStatus = statusFilter === "all" || c.status === statusFilter;
     return matchesSearch && matchesGrade && matchesStatus;
   });
+  const pendingDeleteEligibility = pendingClassAction?.action === "delete"
+    ? adminService.getClassDeletionEligibility(currentUser, pendingClassAction.schoolClass.id)
+    : null;
 
-  const handleCreateClass = (e: React.FormEvent) => {
+  const handleCreateClass = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
 
@@ -98,16 +133,27 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
       setFormError("Vui lòng nhập tên lớp.");
       return;
     }
+    if (!selectedFormGrade) {
+      setFormError("Vui lòng chọn khối thuộc trường và năm học hợp lệ.");
+      return;
+    }
 
     const selectedTeacher = teachers.find((t) => t.id === newTeacherId);
-    const res = adminService.createClass(currentUser, {
-      name: newClassName.trim(),
-      gradeLevel: newGradeLevel,
-      homeroomTeacherId: selectedTeacher?.id,
-      homeroomTeacherName: selectedTeacher?.fullName,
-      roomNumber: newRoomNumber.trim(),
-      accessCode: newAccessCode.trim().toUpperCase() || undefined,
-    });
+    let res;
+    try {
+      res = await adminService.createClass(currentUser, {
+        name: newClassName.trim(),
+        gradeLevel: selectedFormGrade.level,
+        academicYear: selectedFormGrade.academicYear,
+        homeroomTeacherId: selectedTeacher?.id,
+        homeroomTeacherName: selectedTeacher?.fullName,
+        roomNumber: newRoomNumber.trim(),
+        accessCode: newAccessCode.trim().toUpperCase() || undefined,
+      });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể tạo lớp học.");
+      return;
+    }
 
     if (res.success) {
       refreshList();
@@ -123,20 +169,31 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
     }
   };
 
-  const handleUpdateClass = (e: React.FormEvent) => {
+  const handleUpdateClass = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingClass) return;
     setFormError("");
+    if (!selectedFormGrade) {
+      setFormError("Vui lòng chọn khối thuộc trường và năm học hợp lệ.");
+      return;
+    }
 
     const selectedTeacher = teachers.find((t) => t.id === newTeacherId);
-    const res = adminService.updateClass(currentUser, editingClass.id, {
-      name: newClassName.trim(),
-      gradeLevel: newGradeLevel,
-      homeroomTeacherId: selectedTeacher?.id || "",
-      homeroomTeacherName: selectedTeacher?.fullName || "",
-      roomNumber: newRoomNumber.trim(),
-      accessCode: newAccessCode.trim().toUpperCase() || undefined,
-    });
+    let res;
+    try {
+      res = await adminService.updateClass(currentUser, editingClass.id, {
+        name: newClassName.trim(),
+        gradeLevel: selectedFormGrade.level,
+        academicYear: selectedFormGrade.academicYear,
+        homeroomTeacherId: selectedTeacher?.id || "",
+        homeroomTeacherName: selectedTeacher?.fullName || "",
+        roomNumber: newRoomNumber.trim(),
+        accessCode: newAccessCode.trim().toUpperCase() || undefined,
+      });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể cập nhật lớp.");
+      return;
+    }
 
     if (res.success) {
       refreshList();
@@ -148,26 +205,80 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
     }
   };
 
-  const handleToggleLock = (cls: SchoolClass) => {
+  const handleToggleLock = async (cls: SchoolClass) => {
     const newStatus = cls.status === "locked" ? "active" : "locked";
-    adminService.updateClass(currentUser, cls.id, { status: newStatus });
-    refreshList();
-    setActionSuccess(`Đã ${newStatus === "locked" ? "khóa" : "mở khóa"} lớp ${cls.name}`);
-    setTimeout(() => setActionSuccess(""), 3000);
+    try {
+      const result = await adminService.updateClass(currentUser, cls.id, { status: newStatus });
+      if (!result.success) {
+        setFormError(result.error || "Không thể cập nhật trạng thái lớp.");
+        return;
+      }
+      refreshList();
+      setActionSuccess(`Đã ${newStatus === "locked" ? "khóa" : "mở khóa"} lớp ${cls.name}`);
+      setTimeout(() => setActionSuccess(""), 3000);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể cập nhật trạng thái lớp.");
+    }
   };
 
-  const handleToggleArchive = (cls: SchoolClass) => {
-    const newStatus = cls.status === "archived" ? "active" : "archived";
-    adminService.updateClass(currentUser, cls.id, { status: newStatus });
-    refreshList();
-    setActionSuccess(`Đã ${newStatus === "archived" ? "lưu trữ" : "phục hồi"} lớp ${cls.name}`);
-    setTimeout(() => setActionSuccess(""), 3000);
+  const getRelatedStudentCount = (cls: SchoolClass) =>
+    adminService.getInternalStudentsByClass(cls.id).length;
+
+  const openClassAction = (cls: SchoolClass, action: ClassAction["action"]) => {
+    setFormError("");
+    setPendingClassAction({
+      action,
+      schoolClass: cls,
+      studentCount: getRelatedStudentCount(cls),
+    });
+  };
+
+  const handleConfirmClassAction = async () => {
+    if (!pendingClassAction) return;
+    const { action, schoolClass } = pendingClassAction;
+    try {
+      if (action === "delete") {
+        const result = await adminService.deleteClass(currentUser, schoolClass.id);
+        if (!result.success) {
+          setFormError(result.error || "Không thể xóa lớp học.");
+          return;
+        }
+        refreshList();
+        setPendingClassAction(null);
+        setActionSuccess(`Đã xóa lớp ${schoolClass.name}.`);
+        setTimeout(() => setActionSuccess(""), 3500);
+        return;
+      }
+
+      const result = await adminService.setClassArchived(currentUser, schoolClass.id, action === "archive");
+      if (!result.success) {
+        setFormError(result.error || "Không thể cập nhật trạng thái lớp.");
+        return;
+      }
+      refreshList();
+      setPendingClassAction(null);
+      setActionSuccess(
+        action === "archive"
+          ? `Đã lưu trữ lớp ${schoolClass.name}; dữ liệu học sinh và lịch sử được giữ nguyên.`
+          : `Đã khôi phục lớp ${schoolClass.name}.`
+      );
+      setTimeout(() => setActionSuccess(""), 3500);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể thực hiện thao tác với lớp.");
+    }
   };
 
   const openEditModal = (cls: SchoolClass) => {
     setEditingClass(cls);
     setNewClassName(cls.name);
-    setNewGradeLevel(cls.gradeLevel);
+    const currentGrade = grades.find(
+      (grade) =>
+        grade.schoolId === cls.schoolId
+        && grade.academicYear === cls.academicYear
+        && grade.id === cls.gradeId
+        && grade.level === cls.gradeLevel
+    );
+    setNewGradeScope(currentGrade ? gradeScopeKey(currentGrade) : "");
     setNewTeacherId(cls.homeroomTeacherId || "");
     setNewRoomNumber(cls.roomNumber || "");
     setNewAccessCode(cls.accessCode || `QC${cls.name}`);
@@ -203,6 +314,9 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
               onClick={() => {
                 setShowCreateModal(true);
                 setNewClassName("");
+                const initialGrade = adminService.getGrades(school.id, school.academicYear)
+                  .find((grade) => grade.level === 6);
+                setNewGradeScope(initialGrade ? gradeScopeKey(initialGrade) : "");
                 setNewRoomNumber("");
                 setNewTeacherId("");
                 setNewAccessCode("");
@@ -248,10 +362,11 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
               className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none"
             >
               <option value="all">Tất cả khối</option>
-              <option value="6">Khối 6</option>
-              <option value="7">Khối 7</option>
-              <option value="8">Khối 8</option>
-              <option value="9">Khối 9</option>
+              {grades.map((grade) => (
+                <option key={gradeScopeKey(grade)} value={gradeScopeKey(grade)}>
+                  Khối {grade.level} · {grade.academicYear}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -285,13 +400,13 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
                 <th className="py-3 px-4">Phòng Học</th>
                 <th className="py-3 px-4 text-center">Sĩ Số</th>
                 <th className="py-3 px-4">Trạng Thái</th>
-                {canManageClasses && <th className="py-3 px-4 text-right">Thao Tác</th>}
+                <th className="py-3 px-4 text-right">{canManageClasses ? "Thao Tác" : "Chi Tiết"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
               {filteredClasses.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400">
+                  <td colSpan={canManageClasses ? 8 : 7} className="py-8 text-center text-slate-400">
                     Không tìm thấy lớp học nào phù hợp với bộ lọc.
                   </td>
                 </tr>
@@ -356,12 +471,22 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
                         </span>
                       )}
                     </td>
-                    {canManageClasses && (
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setClassDetails(cls)}
+                          title="Xem chi tiết lớp"
+                          aria-label={`Xem chi tiết lớp ${cls.name}`}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-teal-700 hover:bg-teal-50 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        {canManageClasses && (
+                          <>
                           <button
                             onClick={() => openEditModal(cls)}
                             title="Chỉnh sửa thông tin"
+                            aria-label={`Sửa lớp ${cls.name}`}
                             className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 cursor-pointer"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -374,15 +499,25 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
                             {cls.status === "locked" ? <Unlock className="w-3.5 h-3.5 text-amber-600" /> : <Lock className="w-3.5 h-3.5" />}
                           </button>
                           <button
-                            onClick={() => handleToggleArchive(cls)}
-                            title={cls.status === "archived" ? "Bỏ lưu trữ" : "Lưu trữ lớp"}
+                            onClick={() => openClassAction(cls, cls.status === "archived" ? "restore" : "archive")}
+                            title={cls.status === "archived" ? "Khôi phục lớp" : "Lưu trữ lớp"}
+                            aria-label={cls.status === "archived" ? `Khôi phục lớp ${cls.name}` : `Lưu trữ lớp ${cls.name}`}
                             className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 cursor-pointer"
                           >
                             <Archive className="w-3.5 h-3.5" />
                           </button>
-                        </div>
-                      </td>
-                    )}
+                          <button
+                            onClick={() => openClassAction(cls, "delete")}
+                            title={`Xóa lớp ${cls.name} (chỉ khi không còn dữ liệu liên quan)`}
+                            aria-label={`Xóa lớp ${cls.name}`}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-700 hover:bg-rose-50 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -419,14 +554,16 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
               <div className="space-y-1">
                 <label className="font-bold text-slate-700">Khối đào tạo:</label>
                 <select
-                  value={newGradeLevel}
-                  onChange={(e) => setNewGradeLevel(Number(e.target.value) as 6 | 7 | 8 | 9)}
+                  value={newGradeScope}
+                  onChange={(e) => setNewGradeScope(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
-                  <option value={6}>Khối 6</option>
-                  <option value={7}>Khối 7</option>
-                  <option value={8}>Khối 8</option>
-                  <option value={9}>Khối 9</option>
+                  <option value="">Chọn khối và năm học</option>
+                  {formGrades.map((grade) => (
+                    <option key={gradeScopeKey(grade)} value={gradeScopeKey(grade)}>
+                      Khối {grade.level} · {grade.academicYear}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -536,14 +673,16 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
               <div className="space-y-1">
                 <label className="font-bold text-slate-700">Khối đào tạo:</label>
                 <select
-                  value={newGradeLevel}
-                  onChange={(e) => setNewGradeLevel(Number(e.target.value) as 6 | 7 | 8 | 9)}
+                  value={newGradeScope}
+                  onChange={(e) => setNewGradeScope(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value={6}>Khối 6</option>
-                  <option value={7}>Khối 7</option>
-                  <option value={8}>Khối 8</option>
-                  <option value={9}>Khối 9</option>
+                  <option value="">Chọn khối và năm học</option>
+                  {formGrades.map((grade) => (
+                    <option key={gradeScopeKey(grade)} value={gradeScopeKey(grade)}>
+                      Khối {grade.level} · {grade.academicYear}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -615,6 +754,106 @@ export default function ClassesTab({ currentUser, initialGradeFilter }: ClassesT
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {classDetails && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setClassDetails(null);
+        }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="class-details-title" className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-xl">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 id="class-details-title" className="text-lg font-bold text-slate-900">Chi tiết lớp {classDetails.name}</h3>
+                <p className="mt-1 text-xs text-slate-500">Thông tin lớp và dữ liệu liên quan</p>
+              </div>
+              <button type="button" onClick={() => setClassDetails(null)} aria-label="Đóng chi tiết lớp" className="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <dl className="grid grid-cols-2 gap-3 text-sm">
+              <div className="rounded-xl bg-slate-50 p-3"><dt className="text-xs text-slate-500">Khối</dt><dd className="mt-1 font-semibold text-slate-900">Khối {classDetails.gradeLevel}</dd></div>
+              <div className="rounded-xl bg-slate-50 p-3"><dt className="text-xs text-slate-500">Năm học</dt><dd className="mt-1 font-semibold text-slate-900">{classDetails.academicYear}</dd></div>
+              <div className="rounded-xl bg-slate-50 p-3"><dt className="text-xs text-slate-500">Giáo viên chủ nhiệm</dt><dd className="mt-1 font-semibold text-slate-900">{classDetails.homeroomTeacherName || "Chưa gán"}</dd></div>
+              <div className="rounded-xl bg-slate-50 p-3"><dt className="text-xs text-slate-500">Phòng học</dt><dd className="mt-1 font-semibold text-slate-900">{classDetails.roomNumber || "Chưa cập nhật"}</dd></div>
+              <div className="rounded-xl bg-slate-50 p-3"><dt className="text-xs text-slate-500">Mã lớp</dt><dd className="mt-1 font-mono font-semibold text-slate-900">{classDetails.accessCode || `QC${classDetails.name}`}</dd></div>
+              <div className="rounded-xl bg-slate-50 p-3"><dt className="text-xs text-slate-500">Số học sinh</dt><dd className="mt-1 font-semibold text-slate-900">{getRelatedStudentCount(classDetails)}</dd></div>
+              <div className="rounded-xl bg-slate-50 p-3 col-span-2"><dt className="text-xs text-slate-500">Trạng thái</dt><dd className="mt-1 font-semibold text-slate-900">{classDetails.status === "active" ? "Hoạt động" : classDetails.status === "locked" ? "Đã khóa" : "Lưu trữ"}</dd></div>
+            </dl>
+            <div className="flex justify-end gap-2">
+              {canManageClasses && (
+                <button type="button" onClick={() => { openEditModal(classDetails); setClassDetails(null); }} className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-700">
+                  <Edit2 className="w-3.5 h-3.5" /> Sửa thông tin
+                </button>
+              )}
+              <button type="button" onClick={() => setClassDetails(null)} className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">Đóng</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {pendingClassAction && (
+        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <section role="alertdialog" aria-modal="true" aria-labelledby="class-action-title" className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 id="class-action-title" className="text-base font-bold text-slate-900">
+                  {pendingClassAction.action === "archive"
+                    ? "Xác nhận lưu trữ lớp"
+                    : pendingClassAction.action === "restore"
+                      ? "Xác nhận khôi phục lớp"
+                      : "Xác nhận xóa lớp"}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  Lớp <strong>{pendingClassAction.schoolClass.name}</strong> · {pendingClassAction.studentCount} học sinh liên quan
+                </p>
+              </div>
+              <button type="button" onClick={() => setPendingClassAction(null)} aria-label="Đóng xác nhận" className="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {pendingClassAction.action === "archive" && (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+                Lớp sẽ được chuyển sang trạng thái lưu trữ. Hồ sơ học sinh, kết quả, cam kết và lịch sử lớp được giữ nguyên.
+              </p>
+            )}
+            {pendingClassAction.action === "restore" && (
+              <p className="rounded-xl border border-teal-200 bg-teal-50 p-3 text-xs leading-relaxed text-teal-900">
+                Khôi phục lớp về trạng thái hoạt động; dữ liệu hiện có không bị thay đổi.
+              </p>
+            )}
+            {pendingClassAction.action === "delete" && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs leading-relaxed text-rose-900">
+                {pendingDeleteEligibility?.allowed
+                  ? "Lớp không có học sinh, giáo viên chủ nhiệm hoặc lịch sử học tập liên quan. Thao tác chỉ xóa hồ sơ lớp và được ghi nhật ký; không xóa dữ liệu khác."
+                  : pendingDeleteEligibility?.reason || "Không thể xác minh điều kiện xóa lớp."}
+              </div>
+            )}
+
+            {formError && (
+              <div role="alert" className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+              <button type="button" onClick={() => { setPendingClassAction(null); setFormError(""); }} className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">Hủy</button>
+              <button
+                type="button"
+                onClick={handleConfirmClassAction}
+                disabled={pendingClassAction.action === "delete" && !pendingDeleteEligibility?.allowed}
+                className={`rounded-xl px-4 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 ${
+                  pendingClassAction.action === "delete" ? "bg-rose-600 hover:bg-rose-700" : "bg-teal-600 hover:bg-teal-700"
+                }`}
+              >
+                {pendingClassAction.action === "archive" ? "Xác nhận lưu trữ"
+                  : pendingClassAction.action === "restore" ? "Khôi phục lớp"
+                    : "Xác nhận xóa lớp"}
+              </button>
+            </div>
+          </section>
         </div>
       )}
     </div>

@@ -25,6 +25,7 @@ service cloud.firestore {
       return hasAccount()
         && request.auth.token.email_verified == true
         && link().keys().hasAll([
+          'authUid',
           'internalAccountId',
           'role',
           'schoolId',
@@ -33,23 +34,34 @@ service cloud.firestore {
           'linkedBy'
         ])
         && link().keys().hasOnly([
+          'authUid',
           'internalAccountId',
           'role',
           'schoolId',
           'status',
           'createdAt',
-          'linkedBy'
+          'linkedBy',
+          'classId'
         ])
+        && link().authUid == request.auth.uid
         && link().internalAccountId is string
         && link().role is string
         && link().schoolId is string
         && link().status is string
         && link().createdAt is timestamp
         && link().linkedBy is string
+        && account().keys().hasAll(['authUid', 'contactEmail'])
+        && account().authUid == request.auth.uid
+        && account().contactEmail is string
         && link().role == account().role
         && link().schoolId == account().schoolId
         && link().status == account().status
-        && account().role in ['super_admin', 'admin', 'teacher']
+        && account().role in ['super_admin', 'admin', 'teacher', 'student']
+        && (
+          account().role != 'super_admin'
+          || link().internalAccountId == 'super-admin-root'
+        )
+        && (account().role != 'student' || link().classId is string)
         && account().status in ['active', 'locked', 'pending'];
     }
 
@@ -61,8 +73,24 @@ service cloud.firestore {
 
     function isSchoolAdmin(schoolId) {
       return isActiveUser()
-        && link().schoolId == schoolId
-        && link().role in ['super_admin', 'admin'];
+        && (
+          link().role == 'super_admin'
+          || (link().role == 'admin' && link().schoolId == schoolId)
+        );
+    }
+
+    function canReadSchoolRecords(schoolId) {
+      return isActiveUser()
+        && (
+          link().role == 'super_admin'
+          || (link().role in ['admin', 'teacher'] && link().schoolId == schoolId)
+          || (
+            link().role == 'student'
+            && link().schoolId == schoolId
+            && resource.data.classId == link().classId
+            && resource.data.ownerUid == request.auth.uid
+          )
+        );
     }
 
     match /accountLinks/{uid} {
@@ -80,13 +108,23 @@ service cloud.firestore {
 
     match /schools/{schoolId} {
       allow get, list: if isActiveUser()
-        && link().schoolId == schoolId;
+        && (link().role == 'super_admin' || link().schoolId == schoolId);
       allow create, update, delete: if false;
     }
 
     match /schoolData/{schoolId}/records/{recordId} {
-      allow get, list: if isActiveUser()
-        && link().schoolId == schoolId;
+      allow get: if canReadSchoolRecords(schoolId);
+      allow list: if isActiveUser()
+        && (
+          link().role == 'super_admin'
+          || (link().role in ['admin', 'teacher'] && link().schoolId == schoolId)
+          || (
+            link().role == 'student'
+            && link().schoolId == schoolId
+            && resource.data.classId == link().classId
+            && resource.data.ownerUid == request.auth.uid
+          )
+        );
       allow create: if isSchoolAdmin(schoolId)
         && request.resource.data.schoolId == schoolId;
       allow update: if isSchoolAdmin(schoolId)

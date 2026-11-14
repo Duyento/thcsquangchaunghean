@@ -21,33 +21,33 @@ export default function Footer({
   };
 
   return (
-    <footer className="bg-slate-900 text-slate-300 border-t border-slate-800">
+    <footer className="border-t border-slate-200 bg-ink text-slate-300">
       {/* Upper Footer: Highlight Ribbon */}
-      <div className="bg-gradient-to-r from-blue-900 via-teal-900 to-slate-900 border-b border-slate-800 py-6 px-4 sm:px-6 lg:px-8">
+      <div className="border-b border-white/15 bg-brand py-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-teal-500/20 border border-teal-400/40 flex items-center justify-center text-teal-300 shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center text-white shrink-0">
               <Phone className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-teal-200 uppercase font-semibold tracking-wider">Đường dây nóng hỗ trợ học sinh</p>
+              <p className="text-xs text-white/80 font-semibold">Đường dây nóng hỗ trợ học sinh</p>
               <p className="text-base font-bold text-white">Tổng đài Quốc gia 111 · Miễn phí cuộc gọi 24/7</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={() => handleNavClick("quiz")}
-              className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-semibold text-brand bg-white hover:bg-brand-light rounded-lg transition-colors flex items-center gap-1.5"
             >
               <Award className="w-4 h-4" />
-              Làm trắc nghiệm 30 câu
+              Thử thách kiến thức
             </button>
             <button
               onClick={() => handleNavClick("commitment")}
-              className="px-4 py-2 text-xs font-semibold text-teal-200 bg-teal-950 border border-teal-700/60 hover:bg-teal-900 rounded-lg transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-semibold text-white bg-white/10 border border-white/25 hover:bg-white/20 rounded-lg transition-colors flex items-center gap-1.5"
             >
-              <Heart className="w-4 h-4 text-teal-400" />
-              Tạo thẻ cam kết
+              <Heart className="w-4 h-4 text-amber-200" />
+              Cam kết hành động
             </button>
           </div>
         </div>
@@ -62,9 +62,10 @@ export default function Footer({
               <div className="w-8 h-8 rounded-lg bg-teal-500 text-white font-extrabold flex items-center justify-center text-sm">
                 THCS
               </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">
-                TRƯỜNG THCS QUẢNG CHÂU, NGHỆ AN
-              </h3>
+              <div>
+                <p className="text-sm font-extrabold text-white">BÌNH ĐẲNG GIỚI – KHÔNG GIỚI HẠN ƯỚC MƠ</p>
+                <h3 className="text-xs font-semibold text-slate-300">Đơn vị thực hiện: Trường THCS Quảng Châu, Nghệ An</h3>
+              </div>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-lg">
               Sản phẩm phục vụ sân chơi sáng tạo: <strong className="text-slate-200">"Thanh thiếu niên kiến tạo thay đổi vì bình đẳng giới thông qua sáng kiến và truyền thông số"</strong>. Nền tảng giáo dục tương tác mở, thân thiện, bảo vệ quyền lợi và chắp cánh ước mơ cho học sinh THCS.
@@ -77,7 +78,7 @@ export default function Footer({
 
           {/* Col 2: Categories Navigation */}
           <div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Chuyên mục</h4>
+            <h4 className="text-sm font-bold text-white mb-3">Khám phá</h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <button onClick={() => handleNavClick("home")} className="hover:text-teal-300 transition-colors">
@@ -85,28 +86,28 @@ export default function Footer({
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNavClick("knowledge")} className="hover:text-teal-300 transition-colors">
-                  2. Hiểu đúng về bình đẳng giới
+                <button onClick={() => handleNavClick("knowledge")} className="hover:text-white transition-colors">
+                  Kiến thức bình đẳng giới
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNavClick("situations")} className="hover:text-teal-300 transition-colors">
-                  3. Góc tình huống – Em sẽ làm gì?
+                <button onClick={() => handleNavClick("situations")} className="hover:text-white transition-colors">
+                  Tình huống thực tế
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNavClick("quiz")} className="hover:text-teal-300 transition-colors">
-                  4. Thử thách bình đẳng giới (30 câu)
+                <button onClick={() => handleNavClick("quiz")} className="hover:text-white transition-colors">
+                  Thử thách kiến thức
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNavClick("media")} className="hover:text-teal-300 transition-colors">
-                  5. Góc lan tỏa & Sáng kiến
+                <button onClick={() => handleNavClick("media")} className="hover:text-white transition-colors">
+                  Thư viện và sáng kiến
                 </button>
               </li>
               <li>
-                <button onClick={() => handleNavClick("commitment")} className="hover:text-teal-300 transition-colors">
-                  6. Em cam kết hành động
+                <button onClick={() => handleNavClick("commitment")} className="hover:text-white transition-colors">
+                  Cam kết hành động
                 </button>
               </li>
             </ul>
@@ -114,7 +115,7 @@ export default function Footer({
 
           {/* Col 3: Resources & Guidelines */}
           <div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Tài liệu tham khảo</h4>
+            <h4 className="text-sm font-bold text-white mb-3">Tài liệu tham khảo</h4>
             <ul className="space-y-2 text-sm text-slate-400">
               <li className="flex items-center gap-1.5 hover:text-white transition-colors">
                 <ExternalLink className="w-3.5 h-3.5 text-teal-400 shrink-0" />
@@ -144,7 +145,7 @@ export default function Footer({
       {/* Bottom Bar */}
       <div className="border-t border-slate-800 py-6 px-4 text-center text-xs text-slate-500">
         <p className="max-w-3xl mx-auto">
-          Dự án: <span className="text-slate-300 font-semibold">BÌNH ĐẲNG GIỚI – KHÔNG GIỚI HẠN ƯỚC MƠ</span> · Thông điệp: <span className="text-teal-400 font-semibold">Tôn trọng sự khác biệt – Bình đẳng cơ hội – Cùng nhau phát triển</span>.
+          Dự án: <span className="text-slate-300 font-semibold">BÌNH ĐẲNG GIỚI – KHÔNG GIỚI HẠN ƯỚC MƠ</span> · Thông điệp: <span className="text-amber-300 font-semibold">Tôn trọng sự khác biệt – Bình đẳng cơ hội – Cùng nhau phát triển</span>.
         </p>
         <p className="mt-1">
           Bản quyền nội dung giáo dục © 2026 Trường THCS Quảng Châu, Nghệ An.

@@ -3,8 +3,13 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
+const repositoryName = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? '';
+const isUserOrOrganizationSite = repositoryName.toLowerCase().endsWith('.github.io');
+const base = repositoryName && !isUserOrOrganizationSite ? `/${repositoryName}/` : '/';
+
 export default defineConfig(() => {
   return {
+    base,
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

@@ -24,7 +24,7 @@ const ALL_PERMISSIONS: { id: AdminPermission; label: string; desc: string }[] = 
   { id: "manage_classes", label: "Quản lý lớp học", desc: "Tạo, sửa tên, gán GVCN và khóa lớp học" },
   { id: "manage_students", label: "Quản lý học sinh", desc: "Thêm học sinh và chuyển học sinh giữa các lớp" },
   { id: "manage_teachers", label: "Quản lý giáo viên", desc: "Quản lý hồ sơ giáo viên và phân công chủ nhiệm" },
-  { id: "manage_questions", label: "Quản lý câu hỏi", desc: "Xem và cập nhật ngân hàng 30 câu hỏi trắc nghiệm" },
+  { id: "manage_questions", label: "Quản lý câu hỏi", desc: "Xem và cập nhật ngân hàng câu hỏi trắc nghiệm" },
   { id: "manage_posts", label: "Quản lý bài viết", desc: "Biên tập các bài viết tuyên truyền trên website" },
   { id: "manage_videos", label: "Quản lý video", desc: "Đăng tải và phê duyệt video truyền thông học đường" },
   { id: "manage_images", label: "Quản lý hình ảnh", desc: "Quản lý thư viện hình ảnh cổ động và poster" },
@@ -71,13 +71,19 @@ export default function AccountsAndPermissionsTab({ currentUser }: AccountsAndPe
       return;
     }
 
-    const res = await adminService.createSubAdmin(currentUser, {
-      fullName: fullName.trim(),
-      email: email.trim(),
-      plainPassword,
-      permissions: selectedPermissions,
-      phone: phone.trim(),
-    });
+    let res;
+    try {
+      res = await adminService.createSubAdmin(currentUser, {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        plainPassword,
+        permissions: selectedPermissions,
+        phone: phone.trim(),
+      });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể tạo Admin phụ.");
+      return;
+    }
 
     if (res.success) {
       refreshList();
@@ -93,16 +99,22 @@ export default function AccountsAndPermissionsTab({ currentUser }: AccountsAndPe
     }
   };
 
-  const handleSaveEditedPermissions = (e: React.FormEvent) => {
+  const handleSaveEditedPermissions = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPermissionsUser) return;
     setFormError("");
 
-    const res = adminService.updateSubAdminPermissions(
-      currentUser,
-      editingPermissionsUser.id,
-      selectedPermissions
-    );
+    let res;
+    try {
+      res = await adminService.updateSubAdminPermissions(
+        currentUser,
+        editingPermissionsUser.id,
+        selectedPermissions
+      );
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể cập nhật quyền.");
+      return;
+    }
 
     if (res.success) {
       refreshList();
@@ -114,8 +126,14 @@ export default function AccountsAndPermissionsTab({ currentUser }: AccountsAndPe
     }
   };
 
-  const handleToggleUserStatus = (target: UserAccount) => {
-    const res = adminService.toggleUserStatus(currentUser, target.id);
+  const handleToggleUserStatus = async (target: UserAccount) => {
+    let res;
+    try {
+      res = await adminService.toggleUserStatus(currentUser, target.id);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Không thể cập nhật trạng thái tài khoản.");
+      return;
+    }
     if (res.success) {
       refreshList();
       setActionSuccess(

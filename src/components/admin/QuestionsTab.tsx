@@ -117,28 +117,34 @@ export default function QuestionsTab({ currentUser }: QuestionsTabProps) {
   };
 
   // Save Add
-  const handleSaveAdd = (targetStatus: ContentStatus) => {
+  const handleSaveAdd = async (targetStatus: ContentStatus) => {
     setFormError("");
     if (!questionText.trim() || !optionA.trim() || !optionB.trim() || !optionC.trim() || !optionD.trim() || !explanation.trim()) {
       setFormError("Vui lòng điền đầy đủ câu hỏi, 4 phương án lựa chọn và lời giải thích khoa học sư phạm.");
       return;
     }
 
-    const res = contentService.createQuestion(currentUser, {
-      topicId,
-      difficulty,
-      question: questionText.trim(),
-      options: [
-        { id: "A", text: optionA.trim() },
-        { id: "B", text: optionB.trim() },
-        { id: "C", text: optionC.trim() },
-        { id: "D", text: optionD.trim() },
-      ],
-      correctOptionId: correctOption,
-      explanation: explanation.trim(),
-      imageUrl: imageUrl.trim() || undefined,
-      status: targetStatus,
-    });
+    let res;
+    try {
+      res = await contentService.createQuestion(currentUser, {
+        topicId,
+        difficulty,
+        question: questionText.trim(),
+        options: [
+          { id: "A", text: optionA.trim() },
+          { id: "B", text: optionB.trim() },
+          { id: "C", text: optionC.trim() },
+          { id: "D", text: optionD.trim() },
+        ],
+        correctOptionId: correctOption,
+        explanation: explanation.trim(),
+        imageUrl: imageUrl.trim() || undefined,
+        status: targetStatus,
+      });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể tạo câu hỏi.");
+      return;
+    }
 
     if (res.success) {
       refreshList();
@@ -152,7 +158,7 @@ export default function QuestionsTab({ currentUser }: QuestionsTabProps) {
   };
 
   // Save Edit
-  const handleSaveEdit = (targetStatus: ContentStatus) => {
+  const handleSaveEdit = async (targetStatus: ContentStatus) => {
     if (!editingQuestion) return;
     setFormError("");
 
@@ -161,21 +167,27 @@ export default function QuestionsTab({ currentUser }: QuestionsTabProps) {
       return;
     }
 
-    const res = contentService.updateQuestion(currentUser, editingQuestion.id, {
-      topicId,
-      difficulty,
-      question: questionText.trim(),
-      options: [
-        { id: "A", text: optionA.trim() },
-        { id: "B", text: optionB.trim() },
-        { id: "C", text: optionC.trim() },
-        { id: "D", text: optionD.trim() },
-      ],
-      correctOptionId: correctOption,
-      explanation: explanation.trim(),
-      imageUrl: imageUrl.trim() || undefined,
-      status: targetStatus,
-    });
+    let res;
+    try {
+      res = await contentService.updateQuestion(currentUser, editingQuestion.id, {
+        topicId,
+        difficulty,
+        question: questionText.trim(),
+        options: [
+          { id: "A", text: optionA.trim() },
+          { id: "B", text: optionB.trim() },
+          { id: "C", text: optionC.trim() },
+          { id: "D", text: optionD.trim() },
+        ],
+        correctOptionId: correctOption,
+        explanation: explanation.trim(),
+        imageUrl: imageUrl.trim() || undefined,
+        status: targetStatus,
+      });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể cập nhật câu hỏi.");
+      return;
+    }
 
     if (res.success) {
       refreshList();
@@ -189,8 +201,14 @@ export default function QuestionsTab({ currentUser }: QuestionsTabProps) {
   };
 
   // Duplicate / Clone
-  const handleDuplicate = (q: ManageableQuestion) => {
-    const res = contentService.duplicateQuestion(currentUser, q.id);
+  const handleDuplicate = async (q: ManageableQuestion) => {
+    let res;
+    try {
+      res = await contentService.duplicateQuestion(currentUser, q.id);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Không thể nhân bản.");
+      return;
+    }
     if (res.success) {
       refreshList();
       setActionSuccess(`Đã nhân bản câu hỏi [${q.code}] thành [${res.question?.code}] ở trạng thái Bản nháp!`);
@@ -201,14 +219,20 @@ export default function QuestionsTab({ currentUser }: QuestionsTabProps) {
   };
 
   // Delete
-  const handleDelete = (q: ManageableQuestion) => {
+  const handleDelete = async (q: ManageableQuestion) => {
     if (q.isDefault && !isSuperAdmin) {
       alert("30 câu hỏi chuẩn hóa của nhà trường chỉ có Admin chính mới có quyền chỉnh sửa/xóa!");
       return;
     }
     if (!window.confirm(`Bạn có chắc muốn xóa câu hỏi [${q.code}]: "${q.question.substring(0, 40)}..."?`)) return;
 
-    const res = contentService.deleteQuestion(currentUser, q.id);
+    let res;
+    try {
+      res = await contentService.deleteQuestion(currentUser, q.id);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Không thể xóa câu hỏi.");
+      return;
+    }
     if (res.success) {
       refreshList();
       setActionSuccess(`Đã xóa thành công câu hỏi [${q.code}]!`);
@@ -230,12 +254,18 @@ export default function QuestionsTab({ currentUser }: QuestionsTabProps) {
   };
 
   // Import JSON
-  const handleImportJSON = () => {
+  const handleImportJSON = async () => {
     if (!jsonInput.trim()) {
       alert("Vui lòng dán nội dung JSON vào ô nhập!");
       return;
     }
-    const res = contentService.importQuestionsJSON(currentUser, jsonInput.trim());
+    let res;
+    try {
+      res = await contentService.importQuestionsJSON(currentUser, jsonInput.trim());
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Không thể nhập JSON.");
+      return;
+    }
     if (res.success) {
       refreshList();
       setShowJsonImportModal(false);
@@ -623,7 +653,7 @@ export default function QuestionsTab({ currentUser }: QuestionsTabProps) {
                   type="text"
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://... hoặc /src/assets/images/..."
+                  placeholder="URL ảnh HTTPS"
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>

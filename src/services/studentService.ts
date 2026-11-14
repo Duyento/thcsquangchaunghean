@@ -12,6 +12,10 @@ import { contentService } from "./contentService";
 import { createStudentToken, verifyStudentToken } from "./cryptoService";
 import { OFFICIAL_QUESTIONS, OFFICIAL_TOPICS } from "../data/officialData";
 import * as XLSX from "xlsx";
+import {
+  assertStorageWriteLockClear,
+  withLocalStorageWriteLock,
+} from "./storageWriteLock";
 
 const KEY_STUDENT_SESSION = "thcs_quang_chau_student_session";
 const KEY_QUIZ_RECORDS = "thcs_quang_chau_student_quiz_records";
@@ -41,24 +45,28 @@ class StudentService {
   private setStorage<T>(key: string, value: T): void {
     try {
       if (typeof window !== "undefined" && typeof window.localStorage !== "undefined") {
+        assertStorageWriteLockClear();
         window.localStorage.setItem(key, JSON.stringify(value));
       } else {
         this.memoryStorage[key] = JSON.stringify(value);
       }
     } catch (e) {
       console.error("Storage error:", e);
+      throw e instanceof Error ? e : new Error("Không thể ghi dữ liệu học sinh.");
     }
   }
 
   private removeStorage(key: string): void {
     try {
       if (typeof window !== "undefined" && typeof window.localStorage !== "undefined") {
+        assertStorageWriteLockClear();
         window.localStorage.removeItem(key);
       } else {
         delete this.memoryStorage[key];
       }
     } catch (e) {
       console.error("Storage remove error:", e);
+      throw e instanceof Error ? e : new Error("Không thể xóa dữ liệu học sinh.");
     }
   }
 
@@ -80,7 +88,6 @@ class StudentService {
 
     // If lockout has elapsed, reset counter if it was locked
     if (data.lockedUntil > 0 && data.lockedUntil <= now) {
-      this.resetRateLimit();
       return { isLocked: false, remainingSeconds: 0, failedAttempts: 0 };
     }
 
@@ -93,7 +100,9 @@ class StudentService {
       lockedUntil: 0,
     });
 
-    const newAttempts = data.failedAttempts + 1;
+    const newAttempts = (data.lockedUntil > 0 && data.lockedUntil <= Date.now()
+      ? 0
+      : data.failedAttempts) + 1;
     let lockedUntil = 0;
 
     // After 5 consecutive failed attempts, lock for 60 seconds
@@ -120,7 +129,11 @@ class StudentService {
   // Student Authentication
   // ==========================================
 
-  login(
+  login(...args: Parameters<StudentService["loginUnlocked"]>): Promise<ReturnType<StudentService["loginUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.loginUnlocked(...args));
+  }
+
+  private loginUnlocked(
     fullName: string,
     gradeLevel: 6 | 7 | 8 | 9,
     classId: string,
@@ -154,14 +167,6 @@ class StudentService {
     const classCheck = adminService.verifyClassAccessCode(gradeLevel, classId, cleanCode);
     if (!classCheck.valid || !classCheck.schoolClass) {
       this.recordFailedAttempt();
-      adminService.logExternalActivity(
-        "guest",
-        cleanName,
-        "student",
-        "STUDENT_LOGIN_FAILED",
-        "class",
-        `Đăng nhập học sinh thất bại: Sai mã lớp hoặc lớp không hoạt động [Khối ${gradeLevel}]`
-      );
       return { success: false, error: classCheck.error || "Mã lớp dùng chung không chính xác." };
     }
 
@@ -171,14 +176,6 @@ class StudentService {
     const studentCheck = adminService.findStudentInClass(classId, cleanName);
     if (!studentCheck.student) {
       this.recordFailedAttempt();
-      adminService.logExternalActivity(
-        "guest",
-        cleanName,
-        "student",
-        "STUDENT_LOGIN_FAILED",
-        "student",
-        `Đăng nhập học sinh thất bại: Không tìm thấy học sinh "${cleanName}" trong lớp ${schoolClass.name}`
-      );
       return { success: false, error: studentCheck.error || "Không tìm thấy học sinh trong danh sách lớp." };
     }
 
@@ -206,14 +203,26 @@ class StudentService {
 
     this.setStorage<StudentSession>(KEY_STUDENT_SESSION, session);
 
-    adminService.logExternalActivity(
-      student.id,
-      student.fullName,
-      "student",
-      "STUDENT_LOGIN_SUCCESS",
-      "student",
-      `Học sinh [${student.studentCode} - ${student.fullName}] đăng nhập thành công vào Cổng học sinh lớp ${schoolClass.name}`
-    );
+    try {
+      const logged = adminService.logExternalActivityWhileWriteLocked(
+        student.id,
+        student.fullName,
+        "student",
+        "STUDENT_LOGIN_SUCCESS",
+        "student",
+        `Học sinh [${student.studentCode} - ${student.fullName}] đăng nhập thành công vào Cổng học sinh lớp ${schoolClass.name}`
+      );
+      if (!logged) {
+        this.removeStorage(KEY_STUDENT_SESSION);
+        return { success: false, error: "Không thể xác minh phiên học sinh; đăng nhập chưa được hoàn tất." };
+      }
+    } catch (error) {
+      this.removeStorage(KEY_STUDENT_SESSION);
+      return {
+        success: false,
+        error: error instanceof Error ? `Không thể ghi nhật ký đăng nhập: ${error.message}` : "Không thể ghi nhật ký đăng nhập.",
+      };
+    }
 
     return { success: true, session };
   }
@@ -225,7 +234,6 @@ class StudentService {
 
     // Check expiration
     if (Date.now() > session.expiresAt) {
-      this.logout();
       return null;
     }
 
@@ -239,31 +247,41 @@ class StudentService {
 
     if (!isValidToken) {
       console.warn("Cảnh báo an ninh: Phát hiện phiên đăng nhập học sinh bị can thiệp trái phép. Thu hồi phiên ngay lập tức.");
-      this.logout();
       return null;
     }
 
     // Verify student is still active in class and not locked
     const studentCheck = adminService.findStudentInClass(session.classId, session.fullName);
     if (!studentCheck.student || studentCheck.student.status === "locked") {
-      this.logout();
       return null;
     }
 
     return session;
   }
 
-  logout(): void {
+  logout(): Promise<void> {
+    return withLocalStorageWriteLock(() => this.logoutUnlocked());
+  }
+
+  private logoutUnlocked(): void {
     const session = this.getStorage<StudentSession | null>(KEY_STUDENT_SESSION, null);
     if (session) {
-      adminService.logExternalActivity(
-        session.studentId,
-        session.fullName,
-        "student",
-        "STUDENT_LOGOUT",
-        "student",
-        `Học sinh đăng xuất khỏi Cổng học sinh [Lớp ${session.className}]`
-      );
+      try {
+        const logged = adminService.logExternalActivityWhileWriteLocked(
+          session.studentId,
+          session.fullName,
+          "student",
+          "STUDENT_LOGOUT",
+          "student",
+          `Học sinh đăng xuất khỏi Cổng học sinh [Lớp ${session.className}]`
+        );
+        if (!logged) {
+          console.warn("Không ghi nhật ký đăng xuất vì phiên học sinh không hợp lệ.");
+        }
+      } finally {
+        this.removeStorage(KEY_STUDENT_SESSION);
+      }
+      return;
     }
     this.removeStorage(KEY_STUDENT_SESSION);
   }
@@ -336,7 +354,11 @@ class StudentService {
   // Quiz Results & Class Aggregate Statistics
   // ==========================================
 
-  submitQuizResult(
+  submitQuizResult(...args: Parameters<StudentService["submitQuizResultUnlocked"]>): Promise<ReturnType<StudentService["submitQuizResultUnlocked"]>> {
+    return withLocalStorageWriteLock(() => this.submitQuizResultUnlocked(...args));
+  }
+
+  private submitQuizResultUnlocked(
     session: StudentSession,
     answers: Record<string, "A" | "B" | "C" | "D">
   ): { result: StudentQuizResult; error?: string } {
@@ -386,7 +408,7 @@ class StudentService {
     const existing = this.getStorage<StudentQuizResult[]>(KEY_QUIZ_RECORDS, []);
     this.setStorage(KEY_QUIZ_RECORDS, [result, ...existing.slice(0, 499)]);
 
-    adminService.logExternalActivity(
+    const activityLogged = adminService.logExternalActivityWhileWriteLocked(
       session.studentId,
       session.fullName,
       "student",
@@ -395,7 +417,9 @@ class StudentService {
       `Học sinh hoàn thành 30 câu thử thách: Đạt ${correctCount}/${totalQuestions} điểm (${scorePercentage}%) [Lớp ${session.className}]`
     );
 
-    return { result };
+    return activityLogged
+      ? { result }
+      : { result, error: "Kết quả đã lưu nhưng không thể xác minh tác nhân để ghi nhật ký hoạt động." };
   }
 
   // Only returns attempts by the logged in student (privacy rule)
@@ -566,7 +590,6 @@ class StudentService {
       },
     ];
 
-    this.setStorage(KEY_QUIZ_RECORDS, seeds);
     return seeds;
   }
 
@@ -574,7 +597,7 @@ class StudentService {
   getClassAggregateStats(classId: string): ClassAggregateStats {
     const classes = adminService.getClasses();
     const cls = classes.find((c) => c.id === classId);
-    const studentsInClass = adminService.getInternalStudentsByClass(classId);
+    const totalStudentsInClass = adminService.getCountedStudentCount(classId);
 
     const allResults = this.getAllResults();
     const classResults = allResults.filter((r) => r.classId === classId);
@@ -582,8 +605,9 @@ class StudentService {
     // Count unique participants
     const uniqueParticipants = new Set(classResults.map((r) => r.studentId));
     const participatedCount = uniqueParticipants.size;
-    const totalStudentsInClass = studentsInClass.length || cls?.studentCount || 35;
-    const participationRate = Math.min(100, Math.round((participatedCount / totalStudentsInClass) * 100));
+    const participationRate = totalStudentsInClass > 0
+      ? Math.min(100, Math.round((participatedCount / totalStudentsInClass) * 100))
+      : 0;
 
     // Calculate average score
     const avgScore = classResults.length > 0
@@ -746,7 +770,11 @@ class StudentService {
   }
 
   // Test simulation helpers
-  simulateTamperedSession(): void {
+  simulateTamperedSession(): Promise<void> {
+    return withLocalStorageWriteLock(() => this.simulateTamperedSessionUnlocked());
+  }
+
+  private simulateTamperedSessionUnlocked(): void {
     const session = this.getStorage<StudentSession | null>(KEY_STUDENT_SESSION, null);
     if (session) {
       session.token = "tampered_fake_token_hack";
@@ -754,7 +782,11 @@ class StudentService {
     }
   }
 
-  simulateExpiredSession(): void {
+  simulateExpiredSession(): Promise<void> {
+    return withLocalStorageWriteLock(() => this.simulateExpiredSessionUnlocked());
+  }
+
+  private simulateExpiredSessionUnlocked(): void {
     const session = this.getStorage<StudentSession | null>(KEY_STUDENT_SESSION, null);
     if (session) {
       session.expiresAt = Date.now() - 10000;

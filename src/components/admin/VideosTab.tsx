@@ -99,7 +99,7 @@ export default function VideosTab({ currentUser }: VideosTabProps) {
     setShowAddModal(true);
   };
 
-  const handleSave = (targetStatus: ContentStatus) => {
+  const handleSave = async (targetStatus: ContentStatus) => {
     setFormError("");
     if (!title.trim() || !videoUrl.trim()) {
       setFormError("Vui lòng điền tiêu đề và đường dẫn video.");
@@ -107,16 +107,22 @@ export default function VideosTab({ currentUser }: VideosTabProps) {
     }
 
     if (editingVideo) {
-      const res = contentService.updateVideo(currentUser, editingVideo.id, {
-        title: title.trim(),
-        description: description.trim(),
-        topicId,
-        videoUrl: videoUrl.trim(),
-        thumbnailUrl: thumbnailUrl.trim() || undefined,
-        presenter: presenter.trim(),
-        duration: duration.trim(),
-        status: targetStatus,
-      });
+      let res;
+      try {
+        res = await contentService.updateVideo(currentUser, editingVideo.id, {
+          title: title.trim(),
+          description: description.trim(),
+          topicId,
+          videoUrl: videoUrl.trim(),
+          thumbnailUrl: thumbnailUrl.trim() || undefined,
+          presenter: presenter.trim(),
+          duration: duration.trim(),
+          status: targetStatus,
+        });
+      } catch (error) {
+        setFormError(error instanceof Error ? error.message : "Không thể cập nhật video.");
+        return;
+      }
 
       if (res.success) {
         refreshList();
@@ -127,16 +133,22 @@ export default function VideosTab({ currentUser }: VideosTabProps) {
         setFormError(res.error || "Không thể cập nhật video.");
       }
     } else {
-      const res = contentService.createVideo(currentUser, {
-        title: title.trim(),
-        description: description.trim(),
-        topicId,
-        videoUrl: videoUrl.trim(),
-        thumbnailUrl: thumbnailUrl.trim() || undefined,
-        presenter: presenter.trim(),
-        duration: duration.trim(),
-        status: targetStatus,
-      });
+      let res;
+      try {
+        res = await contentService.createVideo(currentUser, {
+          title: title.trim(),
+          description: description.trim(),
+          topicId,
+          videoUrl: videoUrl.trim(),
+          thumbnailUrl: thumbnailUrl.trim() || undefined,
+          presenter: presenter.trim(),
+          duration: duration.trim(),
+          status: targetStatus,
+        });
+      } catch (error) {
+        setFormError(error instanceof Error ? error.message : "Không thể thêm video.");
+        return;
+      }
 
       if (res.success) {
         refreshList();
@@ -149,10 +161,16 @@ export default function VideosTab({ currentUser }: VideosTabProps) {
     }
   };
 
-  const handleDelete = (v: MediaVideoItem) => {
+  const handleDelete = async (v: MediaVideoItem) => {
     if (!window.confirm(`Bạn có chắc muốn xóa video "${v.title}"?`)) return;
 
-    const res = contentService.deleteVideo(currentUser, v.id);
+    let res;
+    try {
+      res = await contentService.deleteVideo(currentUser, v.id);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Không thể xóa video.");
+      return;
+    }
     if (res.success) {
       refreshList();
       setActionSuccess(`Đã xóa video "${v.title}"!`);

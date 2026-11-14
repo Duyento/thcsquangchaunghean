@@ -3,6 +3,7 @@ import { contentService } from "../../services/contentService";
 import { adminService } from "../../services/adminService";
 import { ArticlePost, UserAccount, ContentStatus } from "../../types/adminTypes";
 import { OFFICIAL_TOPICS } from "../../data/officialData";
+import { siteImages } from "../../assets/siteImages";
 import {
   FileText,
   Plus,
@@ -54,7 +55,7 @@ export default function PostsTab({ currentUser }: PostsTabProps) {
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [content, setContent] = useState("");
-  const [coverImage, setCoverImage] = useState("/src/assets/images/hero_gender_equality_1794298223798.jpg");
+  const [coverImage, setCoverImage] = useState(siteImages.hero);
   const [topicId, setTopicId] = useState<number>(1);
   const [author, setAuthor] = useState(currentUser.fullName);
   const [formError, setFormError] = useState("");
@@ -81,7 +82,7 @@ export default function PostsTab({ currentUser }: PostsTabProps) {
     setTitle("");
     setSummary("");
     setContent("");
-    setCoverImage("/src/assets/images/hero_gender_equality_1794298223798.jpg");
+    setCoverImage(siteImages.hero);
     setTopicId(1);
     setAuthor(currentUser.fullName);
     setFormError("");
@@ -143,7 +144,7 @@ export default function PostsTab({ currentUser }: PostsTabProps) {
         replacement = `<ol>\n  <li>${selected}</li>\n  <li>Bước tiếp theo...</li>\n</ol>\n`;
         break;
       case "img":
-        const imgUrl = window.prompt("Nhập đường dẫn ảnh:", "/src/assets/images/hero_gender_equality_1794298223798.jpg");
+        const imgUrl = window.prompt("Nhập đường dẫn ảnh:", siteImages.hero);
         if (imgUrl) replacement = `<img src="${imgUrl}" alt="${selected}" class="rounded-xl my-3 max-h-72 object-cover" />\n`;
         break;
       case "link":
@@ -160,7 +161,7 @@ export default function PostsTab({ currentUser }: PostsTabProps) {
   };
 
   // Save handler (draft or publish/submit review)
-  const handleSave = (targetStatus: ContentStatus) => {
+  const handleSave = async (targetStatus: ContentStatus) => {
     setFormError("");
     if (!title.trim() || !content.trim()) {
       setFormError("Vui lòng điền tiêu đề và nội dung bài viết.");
@@ -168,15 +169,21 @@ export default function PostsTab({ currentUser }: PostsTabProps) {
     }
 
     if (editingPost) {
-      const res = contentService.updatePost(currentUser, editingPost.id, {
-        title: title.trim(),
-        summary: summary.trim() || title.trim(),
-        content,
-        coverImage,
-        topicId,
-        author: author.trim() || currentUser.fullName,
-        status: targetStatus,
-      });
+      let res;
+      try {
+        res = await contentService.updatePost(currentUser, editingPost.id, {
+          title: title.trim(),
+          summary: summary.trim() || title.trim(),
+          content,
+          coverImage,
+          topicId,
+          author: author.trim() || currentUser.fullName,
+          status: targetStatus,
+        });
+      } catch (error) {
+        setFormError(error instanceof Error ? error.message : "Không thể cập nhật bài viết.");
+        return;
+      }
 
       if (res.success) {
         refreshList();
@@ -187,15 +194,21 @@ export default function PostsTab({ currentUser }: PostsTabProps) {
         setFormError(res.error || "Không thể cập nhật bài viết.");
       }
     } else {
-      const res = contentService.createPost(currentUser, {
-        title: title.trim(),
-        summary: summary.trim() || title.trim(),
-        content,
-        coverImage,
-        topicId,
-        author: author.trim() || currentUser.fullName,
-        status: targetStatus,
-      });
+      let res;
+      try {
+        res = await contentService.createPost(currentUser, {
+          title: title.trim(),
+          summary: summary.trim() || title.trim(),
+          content,
+          coverImage,
+          topicId,
+          author: author.trim() || currentUser.fullName,
+          status: targetStatus,
+        });
+      } catch (error) {
+        setFormError(error instanceof Error ? error.message : "Không thể tạo bài viết.");
+        return;
+      }
 
       if (res.success) {
         refreshList();
@@ -209,10 +222,16 @@ export default function PostsTab({ currentUser }: PostsTabProps) {
   };
 
   // Delete handler
-  const handleDelete = (p: ArticlePost) => {
+  const handleDelete = async (p: ArticlePost) => {
     if (!window.confirm(`Bạn có chắc muốn xóa bài viết "${p.title}"?`)) return;
 
-    const res = contentService.deletePost(currentUser, p.id);
+    let res;
+    try {
+      res = await contentService.deletePost(currentUser, p.id);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Không thể xóa bài viết.");
+      return;
+    }
     if (res.success) {
       refreshList();
       setActionSuccess(`Đã xóa bài viết "${p.title}"!`);
@@ -504,7 +523,7 @@ export default function PostsTab({ currentUser }: PostsTabProps) {
                       type="text"
                       value={coverImage}
                       onChange={(e) => setCoverImage(e.target.value)}
-                      placeholder="/src/assets/images/... hoặc link ảnh"
+                      placeholder="URL ảnh HTTPS"
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     />
                   </div>

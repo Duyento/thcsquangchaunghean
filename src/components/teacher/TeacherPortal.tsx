@@ -4,6 +4,7 @@ import { adminService } from "../../services/adminService";
 import { contentService } from "../../services/contentService";
 import { studentService } from "../../services/studentService";
 import { OFFICIAL_TOPICS } from "../../data/officialData";
+import { siteImages } from "../../assets/siteImages";
 import {
   GraduationCap,
   Users,
@@ -137,22 +138,28 @@ export default function TeacherPortal({ currentUser, onLogout, onBackToPublic }:
   };
 
   // Submit Proposed Question
-  const handleProposeQuestion = (e: React.FormEvent) => {
+  const handleProposeQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     const topic = OFFICIAL_TOPICS.find((t) => t.id === qTopicId);
-    const res = contentService.createQuestion(currentUser, {
-      topicId: qTopicId,
-      difficulty: qDifficulty,
-      question: qQuestion,
-      options: [
-        { id: "A", text: qOptA },
-        { id: "B", text: qOptB },
-        { id: "C", text: qOptC },
-        { id: "D", text: qOptD },
-      ],
-      correctOptionId: qCorrect,
-      explanation: qExplanation,
-    });
+    let res;
+    try {
+      res = await contentService.createQuestion(currentUser, {
+        topicId: qTopicId,
+        difficulty: qDifficulty,
+        question: qQuestion,
+        options: [
+          { id: "A", text: qOptA },
+          { id: "B", text: qOptB },
+          { id: "C", text: qOptC },
+          { id: "D", text: qOptD },
+        ],
+        correctOptionId: qCorrect,
+        explanation: qExplanation,
+      });
+    } catch (error) {
+      setNotification({ type: "error", message: error instanceof Error ? error.message : "Gửi đề xuất thất bại." });
+      return;
+    }
 
     if (res.success) {
       setNotification({
@@ -172,16 +179,22 @@ export default function TeacherPortal({ currentUser, onLogout, onBackToPublic }:
   };
 
   // Submit Proposed Article
-  const handleProposeArticle = (e: React.FormEvent) => {
+  const handleProposeArticle = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = contentService.createPost(currentUser, {
-      title: pTitle,
-      summary: pSummary,
-      content: pContent,
-      coverImage: pCover || "/src/assets/images/hero_gender_equality_1794298223798.jpg",
-      topicId: pTopicId,
-      author: currentUser.fullName,
-    });
+    let res;
+    try {
+      res = await contentService.createPost(currentUser, {
+        title: pTitle,
+        summary: pSummary,
+        content: pContent,
+        coverImage: pCover || siteImages.hero,
+        topicId: pTopicId,
+        author: currentUser.fullName,
+      });
+    } catch (error) {
+      setNotification({ type: "error", message: error instanceof Error ? error.message : "Gửi bài viết thất bại." });
+      return;
+    }
 
     if (res.success) {
       setNotification({
@@ -199,16 +212,22 @@ export default function TeacherPortal({ currentUser, onLogout, onBackToPublic }:
   };
 
   // Submit Proposed Video
-  const handleProposeVideo = (e: React.FormEvent) => {
+  const handleProposeVideo = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = contentService.createVideo(currentUser, {
-      title: vTitle,
-      description: vDescription,
-      topicId: vTopicId,
-      videoUrl: vUrl,
-      thumbnailUrl: "/src/assets/images/stem_and_dreams_1794298224995.jpg",
-      presenter: vPresenter || currentUser.fullName,
-    });
+    let res;
+    try {
+      res = await contentService.createVideo(currentUser, {
+        title: vTitle,
+        description: vDescription,
+        topicId: vTopicId,
+        videoUrl: vUrl,
+        thumbnailUrl: siteImages.stem,
+        presenter: vPresenter || currentUser.fullName,
+      });
+    } catch (error) {
+      setNotification({ type: "error", message: error instanceof Error ? error.message : "Gửi video thất bại." });
+      return;
+    }
 
     if (res.success) {
       setNotification({
@@ -239,22 +258,22 @@ export default function TeacherPortal({ currentUser, onLogout, onBackToPublic }:
   };
 
   const navItems = [
-    { id: "class_overview", label: "Lớp được phân công", icon: Users },
+    { id: "class_overview", label: "Lớp của tôi", icon: Users },
     { id: "propose_question", label: "Đề xuất câu hỏi", icon: Award },
     { id: "draft_post", label: "Soạn bài viết", icon: BookOpen },
     { id: "propose_video", label: "Đề xuất video", icon: Video },
-    { id: "my_proposals", label: "Nội dung đã gửi duyệt", icon: Clock },
-    { id: "class_report", label: "Báo cáo chuyên đề lớp", icon: BarChart3 },
+    { id: "my_proposals", label: "Nội dung đã gửi", icon: Clock },
+    { id: "class_report", label: "Báo cáo lớp", icon: BarChart3 },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-surface flex flex-col font-sans">
       {/* Top Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+              <div className="w-10 h-10 rounded-lg bg-brand flex items-center justify-center text-white">
                 <GraduationCap className="w-6 h-6" />
               </div>
               <div>
@@ -294,8 +313,13 @@ export default function TeacherPortal({ currentUser, onLogout, onBackToPublic }:
         </div>
 
         {/* Navigation tabs */}
-        <div className="bg-slate-100/80 border-t border-slate-200 overflow-x-auto scrollbar-none">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 py-1">
+        <nav
+          aria-label="Điều hướng giáo viên"
+          tabIndex={0}
+          style={{ scrollbarWidth: "thin", scrollbarColor: "#087e78 #e6f4f2", touchAction: "pan-x" }}
+          className="w-full min-w-0 overflow-x-auto overscroll-x-contain border-t border-slate-200 bg-slate-100/80 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand"
+        >
+          <div className="mx-auto flex max-w-7xl items-center gap-1 px-4 py-1 sm:px-6 lg:px-8">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -305,17 +329,17 @@ export default function TeacherPortal({ currentUser, onLogout, onBackToPublic }:
                   onClick={() => setActiveTab(item.id)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                     isActive
-                      ? "bg-white text-indigo-700 shadow-xs border border-slate-200/80"
+                      ? "bg-white text-brand shadow-xs border border-slate-200/80"
                       : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? "text-indigo-600" : "text-slate-400"}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? "text-brand" : "text-slate-400"}`} />
                   <span>{item.label}</span>
                 </button>
               );
             })}
           </div>
-        </div>
+        </nav>
       </header>
 
       {/* Notification Toast */}
@@ -402,7 +426,7 @@ export default function TeacherPortal({ currentUser, onLogout, onBackToPublic }:
                 </div>
 
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="text-xs text-slate-500 font-bold uppercase">Mức độ tham gia 30 câu</div>
+                  <div className="text-xs text-slate-500 font-bold uppercase">Mức độ tham gia thử thách</div>
                   <div className="text-2xl font-black text-slate-900 mt-1">
                     {classStats?.participationRate || 0}%
                   </div>

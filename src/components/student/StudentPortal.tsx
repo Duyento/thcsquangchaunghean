@@ -41,6 +41,7 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
 
   // Content data
   const [questions, setQuestions] = useState<SanitizedQuestion[]>([]);
+  const [questionsLoaded, setQuestionsLoaded] = useState(false);
   const [articles, setArticles] = useState<ArticlePost[]>([]);
   const [videos, setVideos] = useState<MediaVideoItem[]>([]);
   const [images, setImages] = useState<GalleryImageItem[]>([]);
@@ -53,6 +54,7 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
   >({});
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [quizResult, setQuizResult] = useState<StudentQuizResult | null>(null);
+  const [activityLogWarning, setActivityLogWarning] = useState("");
 
   // Class stats and personal history
   const [classStats, setClassStats] = useState<ClassAggregateStats>(() =>
@@ -78,6 +80,7 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
   useEffect(() => {
     // 1. Sanitized questions without answers
     setQuestions(studentService.getSanitizedQuestions());
+    setQuestionsLoaded(true);
 
     // 2. Published articles
     const posts = contentService.getPosts().filter((p) => p.status === "published");
@@ -107,14 +110,18 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
   };
 
   // Complete quiz
-  const handleFinishQuiz = () => {
-    const res = studentService.submitQuizResult(session, userAnswers);
-    if (res.result) {
-      setQuizResult(res.result);
-      setQuizCompleted(true);
-      // Refresh stats
-      setClassStats(studentService.getClassAggregateStats(session.classId));
-      setMyHistory(studentService.getStudentResults(session.studentId));
+  const handleFinishQuiz = async () => {
+    try {
+      const res = await studentService.submitQuizResult(session, userAnswers);
+      setActivityLogWarning(res.error ?? "");
+      if (res.result) {
+        setQuizResult(res.result);
+        setQuizCompleted(true);
+        setClassStats(studentService.getClassAggregateStats(session.classId));
+        setMyHistory(studentService.getStudentResults(session.studentId));
+      }
+    } catch (error) {
+      setActivityLogWarning(error instanceof Error ? error.message : "Không thể lưu kết quả bài kiểm tra.");
     }
   };
 
@@ -125,29 +132,30 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
     setCurrentQuestionIndex(0);
     setQuizCompleted(false);
     setQuizResult(null);
+    setActivityLogWarning("");
   };
 
   const navTabs = [
     { id: "home", label: "Trang chủ", icon: Sparkles },
-    { id: "topics", label: "6 Chủ đề", icon: BookOpen },
-    { id: "quiz", label: "Thử thách 30 câu", icon: Award },
-    { id: "situations", label: "10 Tình huống", icon: HelpCircle },
-    { id: "articles", label: "Bài viết & Phóng sự", icon: BookOpen },
-    { id: "videos", label: "Rạp phim học đường", icon: Video },
-    { id: "gallery", label: "Tranh cổ động", icon: ImageIcon },
-    { id: "commitment", label: "Ký cam kết", icon: HeartHandshake },
-    { id: "stats", label: "Kết quả của em & Lớp", icon: BarChart3 },
+    { id: "topics", label: "Chủ đề", icon: BookOpen },
+    { id: "quiz", label: "Thử thách kiến thức", icon: Award },
+    { id: "situations", label: "Tình huống", icon: HelpCircle },
+    { id: "articles", label: "Bài viết", icon: BookOpen },
+    { id: "videos", label: "Video học đường", icon: Video },
+    { id: "gallery", label: "Hình ảnh", icon: ImageIcon },
+    { id: "commitment", label: "Cam kết", icon: HeartHandshake },
+    { id: "stats", label: "Kết quả học tập", icon: BarChart3 },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-surface flex flex-col font-sans">
       {/* Top Header Bar */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left: School badge & Student Identity */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+              <div className="w-10 h-10 rounded-lg bg-brand flex items-center justify-center text-white">
                 <GraduationCap className="w-6 h-6" />
               </div>
               <div>
@@ -190,8 +198,13 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
         </div>
 
         {/* Sub-bar: Navigation Tabs */}
-        <div className="bg-slate-100/80 border-t border-slate-200 overflow-x-auto scrollbar-none">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 py-1">
+        <nav
+          aria-label="Điều hướng học sinh"
+          tabIndex={0}
+          style={{ scrollbarWidth: "thin", scrollbarColor: "#087e78 #e6f4f2", touchAction: "pan-x" }}
+          className="w-full min-w-0 overflow-x-auto overscroll-x-contain border-t border-slate-200 bg-slate-100/80 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand"
+        >
+          <div className="mx-auto flex max-w-7xl items-center gap-1 px-4 py-1 sm:px-6 lg:px-8">
             {navTabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -201,21 +214,21 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                     isActive
-                      ? "bg-white text-blue-700 shadow-xs border border-slate-200/80"
+                      ? "bg-white text-brand shadow-xs border border-slate-200/80"
                       : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? "text-brand" : "text-slate-400"}`} />
                   <span>{tab.label}</span>
                 </button>
               );
             })}
           </div>
-        </div>
+        </nav>
       </header>
 
       {/* Pedagogical Notice Banner (Requirement E) */}
-      <div className="bg-gradient-to-r from-blue-50 via-teal-50 to-blue-50 border-b border-blue-200/60 py-2.5 px-4 text-xs text-blue-900">
+      <div className="border-b border-brand/20 bg-brand-light py-2.5 px-4 text-xs text-ink">
         <div className="max-w-7xl mx-auto flex items-start sm:items-center gap-2">
           <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5 sm:mt-0" />
           <p className="font-medium">
@@ -232,7 +245,7 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
         {activeTab === "home" && (
           <div className="space-y-6">
             {/* Welcome Hero Banner */}
-            <div className="relative rounded-2xl bg-gradient-to-r from-blue-700 via-teal-600 to-indigo-800 text-white p-6 sm:p-8 overflow-hidden shadow-lg">
+            <div className="relative rounded-2xl bg-ink text-white p-6 sm:p-8 overflow-hidden shadow-sm">
               <div className="relative z-10 max-w-2xl space-y-3">
                 <span className="inline-block px-3 py-1 rounded-full bg-white/20 text-teal-100 text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
                   Không gian học đường THCS Quảng Châu
@@ -241,7 +254,7 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
                   Chào em, {session.fullName}!
                 </h1>
                 <p className="text-sm sm:text-base text-blue-100 leading-relaxed">
-                  Bình đẳng giới là khi mỗi bạn học sinh dù nam hay nữ đều được tôn trọng, tự do nuôi dưỡng ước mơ và có cơ hội phát triển công bằng. Hãy cùng lớp {session.className} khám phá kiến thức và thử sức với 30 câu hỏi nhé!
+                  Bình đẳng giới là khi mỗi bạn học sinh dù nam hay nữ đều được tôn trọng, tự do nuôi dưỡng ước mơ và có cơ hội phát triển công bằng. Hãy cùng lớp {session.className} khám phá kiến thức và {questionsLoaded ? `thử sức với ${questions.length} câu hỏi` : "khám phá thử thách kiến thức"} nhé!
                 </p>
                 <div className="flex flex-wrap gap-3 pt-2">
                   <button
@@ -249,7 +262,7 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
                     className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all hover:scale-105 cursor-pointer"
                   >
                     <Award className="w-4 h-4 text-slate-900" />
-                    <span>Làm thử thách 30 câu</span>
+                    <span>{questionsLoaded && questions.length > 0 ? `Làm thử thách ${questions.length} câu` : "Thử thách kiến thức"}</span>
                   </button>
                   <button
                     onClick={() => setActiveTab("topics")}
@@ -329,7 +342,7 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
                   <Award className="w-5 h-5" />
                 </div>
                 <h3 className="font-extrabold text-slate-900 group-hover:text-teal-600 transition-colors">
-                  Trò Chơi 30 Câu Hỏi
+                  {questionsLoaded && questions.length > 0 ? `Thử thách ${questions.length} câu hỏi` : "Thử thách kiến thức"}
                 </h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
                   Thử thách trắc nghiệm với giải thích chi tiết sau mỗi câu trả lời, không lộ đáp án trước khi làm.
@@ -511,7 +524,7 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
               <div>
                 <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
                   <Award className="w-5 h-5 text-amber-500" />
-                  <span>Trò Chơi Trắc Nghiệm 30 Câu Hỏi</span>
+                  <span>Thử thách kiến thức{questionsLoaded ? ` (${questions.length} câu)` : ""}</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
                   Hệ thống bảo đảm tính sư phạm: Đáp án đúng và giải thích chỉ hiển thị sau khi em chọn câu trả lời!
@@ -545,9 +558,14 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
                     Chúc mừng {session.fullName}!
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600">
-                    Em đã hoàn thành trọn vẹn 30 câu hỏi về Bình đẳng giới. Kết quả học hỏi của em:
+                    Em đã hoàn thành thử thách gồm {quizResult.totalQuestions} câu hỏi về Bình đẳng giới. Kết quả học hỏi của em:
                   </p>
                 </div>
+                {activityLogWarning && (
+                  <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                    {activityLogWarning}
+                  </p>
+                )}
 
                 <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-100">
                   <div className="bg-blue-50 p-4 rounded-xl">
@@ -577,7 +595,7 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
                         <div key={t.id} className="text-xs space-y-1">
                           <div className="flex justify-between font-semibold text-slate-700">
                             <span>{t.title}</span>
-                            <span>{ts?.correct || 0}/{ts?.total || 5} câu ({pct}%)</span>
+                            <span>{ts?.correct || 0}/{ts?.total || 0} câu ({pct}%)</span>
                           </div>
                           <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                             <div
@@ -748,7 +766,7 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
                 {/* Question Navigator (1 column) */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
                   <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Danh sách 30 câu hỏi
+                    Danh sách {questions.length} câu hỏi
                   </h4>
                   <div className="grid grid-cols-5 gap-2">
                     {questions.map((q, idx) => {
@@ -1172,7 +1190,7 @@ export default function StudentPortal({ session, onLogout, onBackToPublic }: Stu
               {myHistory.length === 0 ? (
                 <div className="text-center py-8 text-slate-400 space-y-2">
                   <HelpCircle className="w-8 h-8 mx-auto text-slate-300" />
-                  <p className="text-xs">Em chưa tham gia thử thách 30 câu hỏi nào.</p>
+                  <p className="text-xs">Em chưa tham gia thử thách kiến thức nào.</p>
                   <button
                     onClick={() => setActiveTab("quiz")}
                     className="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition-colors cursor-pointer"

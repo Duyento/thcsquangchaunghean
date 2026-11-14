@@ -34,16 +34,25 @@ interface ExcelRowError {
   errors: string[];
 }
 
+function gradeScopeKey(grade: Pick<Grade, "schoolId" | "academicYear" | "id">): string {
+  return JSON.stringify([grade.schoolId, grade.academicYear, grade.id]);
+}
+
+function classScopeKey(schoolClass: Pick<SchoolClass, "schoolId" | "academicYear" | "id">): string {
+  return JSON.stringify([schoolClass.schoolId, schoolClass.academicYear, schoolClass.id]);
+}
+
 export default function StudentsTab({ currentUser }: StudentsTabProps) {
   const [students, setStudents] = useState<Student[]>(() => adminService.getStudents(currentUser));
   const classes: SchoolClass[] = adminService.getClasses();
-  const grades: Grade[] = adminService.getGrades();
+  const grades: Grade[] = adminService.getGradesForSchool();
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [classFilter, setClassFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const selectedGrade = grades.find((grade) => gradeScopeKey(grade) === gradeFilter);
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -84,8 +93,22 @@ export default function StudentsTab({ currentUser }: StudentsTabProps) {
       s.studentCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (s.parentPhone && s.parentPhone.includes(searchQuery));
 
-    const matchesGrade = gradeFilter === "all" || s.gradeLevel === Number(gradeFilter);
-    const matchesClass = classFilter === "all" || s.classId === classFilter;
+    const studentClass = classes.find(
+      (schoolClass) =>
+        schoolClass.id === s.classId
+        && schoolClass.schoolId === s.schoolId
+        && schoolClass.academicYear === s.academicYear
+    );
+    const matchesGrade = gradeFilter === "all" || Boolean(
+      selectedGrade
+      && studentClass
+      && studentClass.schoolId === selectedGrade.schoolId
+      && studentClass.academicYear === selectedGrade.academicYear
+      && studentClass.gradeId === selectedGrade.id
+      && studentClass.gradeLevel === selectedGrade.level
+    );
+    const matchesClass = classFilter === "all"
+      || classScopeKey({ id: s.classId, schoolId: s.schoolId, academicYear: s.academicYear }) === classFilter;
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "locked" && s.status === "locked") ||
@@ -95,7 +118,7 @@ export default function StudentsTab({ currentUser }: StudentsTabProps) {
   });
 
   // 1. ADD STUDENT
-  const handleAddStudent = (e: React.FormEvent) => {
+  const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
 
@@ -104,14 +127,20 @@ export default function StudentsTab({ currentUser }: StudentsTabProps) {
       return;
     }
 
-    const res = adminService.createStudent(currentUser, {
-      fullName: fullName.trim(),
-      studentCode: studentCode.trim().toUpperCase(),
-      gender,
-      birthDate,
-      classId,
-      parentPhone: parentPhone.trim(),
-    });
+    let res;
+    try {
+      res = await adminService.createStudent(currentUser, {
+        fullName: fullName.trim(),
+        studentCode: studentCode.trim().toUpperCase(),
+        gender,
+        birthDate,
+        classId,
+        parentPhone: parentPhone.trim(),
+      });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể thêm học sinh.");
+      return;
+    }
 
     if (res.success) {
       refreshList();
@@ -137,18 +166,24 @@ export default function StudentsTab({ currentUser }: StudentsTabProps) {
     setFormError("");
   };
 
-  const handleUpdateStudent = (e: React.FormEvent) => {
+  const handleUpdateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingStudent) return;
     setFormError("");
 
-    const res = adminService.updateStudent(currentUser, editingStudent.id, {
-      studentCode: studentCode.trim().toUpperCase(),
-      fullName: fullName.trim(),
-      gender,
-      birthDate,
-      parentPhone: parentPhone.trim(),
-    });
+    let res;
+    try {
+      res = await adminService.updateStudent(currentUser, editingStudent.id, {
+        studentCode: studentCode.trim().toUpperCase(),
+        fullName: fullName.trim(),
+        gender,
+        birthDate,
+        parentPhone: parentPhone.trim(),
+      });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể cập nhật thông tin.");
+      return;
+    }
 
     if (res.success) {
       refreshList();
@@ -161,7 +196,7 @@ export default function StudentsTab({ currentUser }: StudentsTabProps) {
   };
 
   // 3. LOCK / UNLOCK STUDENT
-  const handleToggleLock = (st: Student) => {
+  const handleToggleLock = async (st: Student) => {
     const isLocked = st.status === "locked";
     const confirmMsg = isLocked
       ? `Bạn có chắc muốn MỞ KHÓA tài khoản học sinh "${st.fullName}" (${st.studentCode})?`
@@ -169,7 +204,13 @@ export default function StudentsTab({ currentUser }: StudentsTabProps) {
 
     if (!window.confirm(confirmMsg)) return;
 
-    const res = adminService.toggleStudentLock(currentUser, st.id);
+    let res;
+    try {
+      res = await adminService.toggleStudentLock(currentUser, st.id);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Không thể thực hiện thao tác.");
+      return;
+    }
     if (res.success) {
       refreshList();
       setActionSuccess(`${res.newStatus === "locked" ? "Đã khóa" : "Đã mở khóa"} thành công tài khoản học sinh!`);
@@ -180,12 +221,18 @@ export default function StudentsTab({ currentUser }: StudentsTabProps) {
   };
 
   // 4. TRANSFER STUDENT
-  const handleTransferStudent = (e: React.FormEvent) => {
+  const handleTransferStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!transferringStudent || !targetClassId) return;
     setFormError("");
 
-    const res = adminService.transferStudent(currentUser, transferringStudent.id, targetClassId);
+    let res;
+    try {
+      res = await adminService.transferStudent(currentUser, transferringStudent.id, targetClassId);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể chuyển lớp.");
+      return;
+    }
     if (res.success) {
       refreshList();
       setTransferringStudent(null);
@@ -386,14 +433,21 @@ export default function StudentsTab({ currentUser }: StudentsTabProps) {
   };
 
   // 8. CONFIRM EXCEL IMPORT (Never overwrite without confirmation)
-  const handleConfirmExcelImport = () => {
+  const handleConfirmExcelImport = async () => {
     if (validRows.length === 0) {
       alert("Không có dòng hợp lệ nào để nhập!");
       return;
     }
 
     setExcelImporting(true);
-    const res = adminService.bulkImportStudents(currentUser, validRows);
+    let res;
+    try {
+      res = await adminService.bulkImportStudents(currentUser, validRows);
+    } catch (error) {
+      setExcelImporting(false);
+      alert(error instanceof Error ? error.message : "Không thể nhập dữ liệu.");
+      return;
+    }
     setExcelImporting(false);
 
     if (res.success) {
@@ -503,8 +557,8 @@ export default function StudentsTab({ currentUser }: StudentsTabProps) {
             >
               <option value="all">Tất cả Khối</option>
               {grades.map((g) => (
-                <option key={g.id} value={g.level}>
-                  Khối {g.level}
+                <option key={gradeScopeKey(g)} value={gradeScopeKey(g)}>
+                  Khối {g.level} · {g.academicYear}
                 </option>
               ))}
             </select>
@@ -520,9 +574,15 @@ export default function StudentsTab({ currentUser }: StudentsTabProps) {
             >
               <option value="all">Tất cả các lớp</option>
               {classes
-                .filter((c) => gradeFilter === "all" || c.gradeLevel === Number(gradeFilter))
+                .filter((schoolClass) => gradeFilter === "all" || Boolean(
+                  selectedGrade
+                  && schoolClass.schoolId === selectedGrade.schoolId
+                  && schoolClass.academicYear === selectedGrade.academicYear
+                  && schoolClass.gradeId === selectedGrade.id
+                  && schoolClass.gradeLevel === selectedGrade.level
+                ))
                 .map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={classScopeKey(c)} value={classScopeKey(c)}>
                     Lớp {c.name} ({c.studentCount} hs)
                   </option>
                 ))}

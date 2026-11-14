@@ -1,6 +1,9 @@
 import { ArrowRight, BookOpen, Award, HeartHandshake, Compass, Sparkles, CheckCircle2, Play, Users, Star, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { MEDIA_VIDEOS, INSPIRING_QUOTES } from "../data/initiativesData";
+import { QUIZ_QUESTIONS } from "../data/quizData";
+import { contentService } from "../services/contentService";
+import { siteImages } from "../assets/siteImages";
 
 interface HomeSectionProps {
   setActiveTab: (tab: string) => void;
@@ -8,46 +11,49 @@ interface HomeSectionProps {
 
 export default function HomeSection({ setActiveTab }: HomeSectionProps) {
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+  const [quizQuestionCount] = useState(() =>
+    contentService.getPublicQuestions().length || QUIZ_QUESTIONS.length
+  );
 
   const pillars = [
     {
       id: "knowledge",
-      title: "Hiểu đúng về Giới",
+      title: "Kiến thức bình đẳng giới",
       desc: "Phân biệt Giới và Giới tính, xóa tan những quan niệm sai lầm về năng lực và màu sắc.",
       icon: Compass,
-      color: "from-blue-500 to-blue-600",
+      color: "bg-brand",
       badge: "6 Chủ đề",
     },
     {
       id: "situations",
-      title: "Góc tình huống",
+      title: "Tình huống thực tế",
       desc: "10 câu chuyện thực tế tại trường lớp, gia đình và trên mạng để em rèn luyện bản lĩnh ứng xử.",
       icon: BookOpen,
-      color: "from-teal-500 to-teal-600",
+      color: "bg-brand",
       badge: "10 Tình huống",
     },
     {
       id: "quiz",
-      title: "Thử thách trắc nghiệm",
-      desc: "30 câu hỏi chuẩn hóa có đáp án giải thích chi tiết, chấm điểm tự động và nhận danh hiệu.",
+      title: "Thử thách kiến thức",
+      desc: `${quizQuestionCount} câu hỏi có đáp án giải thích chi tiết và chấm điểm tự động.`,
       icon: Award,
-      color: "from-indigo-500 to-blue-600",
-      badge: "30 Câu hỏi",
+      color: "bg-brand",
+      badge: `${quizQuestionCount} câu hỏi`,
     },
     {
       id: "media",
-      title: "Góc lan tỏa & Sáng kiến",
+      title: "Thư viện và sáng kiến",
       desc: "Trưng bày tranh vẽ cổ động số, infographic, podcast và phóng sự truyền thông của học sinh.",
       icon: Sparkles,
-      color: "from-amber-500 to-orange-500",
+      color: "bg-brand",
       badge: "Sáng tạo số",
     },
     {
       id: "commitment",
-      title: "Em cam kết hành động",
+      title: "Cam kết hành động",
       desc: "Gửi gắm lời hứa thay đổi, nhận giấy chứng nhận Đại sứ Bình đẳng giới mang tên mình.",
       icon: HeartHandshake,
-      color: "from-emerald-500 to-teal-600",
+      color: "bg-brand",
       badge: "Hành động ngay",
     },
   ];
@@ -57,34 +63,33 @@ export default function HomeSection({ setActiveTab }: HomeSectionProps) {
   return (
     <div className="space-y-16 py-6 pb-20">
       {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900 via-teal-900 to-slate-900 text-white shadow-xl">
-        <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px]" />
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-surface text-ink shadow-sm">
 
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             {/* School & Contest Identity */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs sm:text-sm text-teal-200">
-              <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+            <div className="inline-flex flex-wrap items-center gap-2 rounded-full border border-brand/20 bg-brand-light px-3 py-1.5 text-xs text-brand sm:text-sm">
+              <span className="size-2 rounded-full bg-brand" />
               <span className="font-semibold">Trường THCS Quảng Châu, Nghệ An</span>
-              <span className="text-white/40">|</span>
+              <span className="text-brand/50">|</span>
               <span>Sân chơi sáng tạo số</span>
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-ink leading-tight">
               BÌNH ĐẲNG GIỚI <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-sky-200 to-amber-200">
+              <span className="text-brand">
                 KHÔNG GIỚI HẠN ƯỚC MƠ
               </span>
             </h1>
 
             {/* Slogan & Message */}
-            <p className="text-lg sm:text-xl font-medium text-amber-200 max-w-xl mx-auto lg:mx-0">
+            <p className="text-lg sm:text-xl font-semibold text-brand max-w-xl mx-auto lg:mx-0">
               "Tôn trọng sự khác biệt – Bình đẳng cơ hội – Cùng nhau phát triển"
             </p>
 
             {/* Sub-text */}
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+            <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-2xl mx-auto lg:mx-0">
               Chào mừng các bạn học sinh khối 6, 7, 8, 9 đến với không gian học tập và tương tác số vì bình đẳng giới. Nơi mọi ước mơ khoa học, nghệ thuật và thể thao đều được chắp cánh mà không bị rào cản bởi bất kỳ định kiến nào!
             </p>
 
@@ -92,42 +97,42 @@ export default function HomeSection({ setActiveTab }: HomeSectionProps) {
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
               <button
                 onClick={() => setActiveTab("quiz")}
-                className="px-6 py-3 text-sm font-bold text-slate-900 bg-gradient-to-r from-amber-300 to-yellow-400 hover:from-amber-400 hover:to-yellow-500 rounded-xl shadow-lg shadow-amber-400/20 flex items-center gap-2 transform active:scale-95 transition-all cursor-pointer"
+                className="px-6 py-3 text-sm font-bold text-white bg-brand hover:bg-brand-dark rounded-lg shadow-sm flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <Award className="w-5 h-5 text-slate-900" />
-                <span>Bắt đầu thử thách 30 câu</span>
+                <Award className="w-5 h-5 text-accent" />
+                <span>Bắt đầu thử thách ({quizQuestionCount} câu)</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
               <button
                 onClick={() => setActiveTab("situations")}
-                className="px-6 py-3 text-sm font-bold text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl backdrop-blur-sm transition-all flex items-center gap-2 cursor-pointer"
+                className="px-6 py-3 text-sm font-bold text-ink bg-white hover:bg-brand-light border border-slate-300 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
               >
-                <BookOpen className="w-5 h-5 text-teal-300" />
+                <BookOpen className="w-5 h-5 text-brand" />
                 <span>Khám phá 10 tình huống</span>
               </button>
 
               <button
                 onClick={() => setActiveTab("commitment")}
-                className="px-6 py-3 text-sm font-bold text-teal-200 hover:text-white bg-teal-950/60 hover:bg-teal-900/80 border border-teal-500/30 rounded-xl transition-all flex items-center gap-2 cursor-pointer"
+                className="px-6 py-3 text-sm font-bold text-brand hover:bg-brand-light border border-brand/30 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
               >
-                <HeartHandshake className="w-5 h-5 text-teal-400" />
+                <HeartHandshake className="w-5 h-5 text-brand" />
                 <span>Ký cam kết hành động</span>
               </button>
             </div>
 
             {/* Trust points */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 pt-4 text-xs text-slate-300">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 pt-4 text-xs text-slate-600">
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                <CheckCircle2 className="w-4 h-4 text-brand" />
                 <span>100% Miễn phí & Không cần đăng nhập</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                <CheckCircle2 className="w-4 h-4 text-brand" />
                 <span>Không thu thập dữ liệu cá nhân</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                <CheckCircle2 className="w-4 h-4 text-brand" />
                 <span>Thiết kế riêng cho học sinh THCS</span>
               </div>
             </div>
@@ -135,9 +140,9 @@ export default function HomeSection({ setActiveTab }: HomeSectionProps) {
 
           {/* Hero Banner Visual Asset */}
           <div className="lg:col-span-5 relative">
-            <div className="relative rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-slate-800 group">
+            <div className="relative overflow-hidden rounded-xl border border-slate-200 shadow-md bg-white group">
               <img
-                src="/src/assets/images/hero_gender_equality_1794298223798.jpg"
+                src={siteImages.hero}
                 alt="Học sinh THCS Quảng Châu cùng nhau học tập và ước mơ bình đẳng giới"
                 className="w-full h-auto object-cover transform group-hover:scale-102 transition-transform duration-500"
                 referrerPolicy="no-referrer"
@@ -162,7 +167,7 @@ export default function HomeSection({ setActiveTab }: HomeSectionProps) {
             <p className="text-xs text-slate-500">Từ khái niệm đến luật pháp & hành động</p>
           </div>
           <div className="space-y-1">
-            <p className="text-3xl sm:text-4xl font-extrabold text-teal-600">30</p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-teal-600">{quizQuestionCount}</p>
             <p className="text-sm font-semibold text-slate-800">Câu hỏi trắc nghiệm</p>
             <p className="text-xs text-slate-500">Có giải thích sư phạm chi tiết</p>
           </div>
@@ -183,7 +188,7 @@ export default function HomeSection({ setActiveTab }: HomeSectionProps) {
       <section className="space-y-6">
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Khám phá 5 Khu Vực Trải Nghiệm
+            Khám phá nội dung
           </h2>
           <p className="text-sm sm:text-base text-slate-600">
             Học tập chủ động, thực hành tương tác và lan tỏa năng lượng tích cực đến bạn bè
@@ -201,7 +206,7 @@ export default function HomeSection({ setActiveTab }: HomeSectionProps) {
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}>
+                    <div className={`w-12 h-12 rounded-lg ${item.color} text-white flex items-center justify-center group-hover:scale-105 transition-transform`}>
                       <Icon className="w-6 h-6" />
                     </div>
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
@@ -269,7 +274,7 @@ export default function HomeSection({ setActiveTab }: HomeSectionProps) {
 
           <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-800 max-w-3xl mx-auto shadow-2xl">
             <img
-              src="/src/assets/images/stem_and_dreams_1794298224995.jpg"
+              src={siteImages.stem}
               alt="Hình ảnh phim Ước mơ của Linh và chiếc cờ-lê"
               className="w-full h-64 sm:h-80 object-cover opacity-85"
             />

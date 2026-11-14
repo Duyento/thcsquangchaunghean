@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { PRESET_PLEDGES, INITIAL_STUDENT_PLEDGES, StudentPledge } from "../data/commitmentsData";
 import { HeartHandshake, CheckCircle2, Award, Printer, Heart, Sparkles, Send, ShieldCheck, UserCheck, Star } from "lucide-react";
+import {
+  assertStorageWriteLockClear,
+  withStorageWriteLock,
+} from "../services/storageWriteLock";
 
 export default function CommitmentSection() {
   const [studentName, setStudentName] = useState("");
@@ -11,6 +15,7 @@ export default function CommitmentSection() {
   const [createdCertificate, setCreatedCertificate] = useState<StudentPledge | null>(null);
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [submittedAlert, setSubmittedAlert] = useState(false);
+  const [storageWriteError, setStorageWriteError] = useState("");
 
   // Load from localStorage or initial
   useEffect(() => {
@@ -39,7 +44,7 @@ export default function CommitmentSection() {
     }));
   };
 
-  const handleSubmitPledge = (e: React.FormEvent) => {
+  const handleSubmitPledge = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentName.trim()) {
       alert("Vui lòng nhập tên hoặc biệt danh của em nhé!");
@@ -71,14 +76,23 @@ export default function CommitmentSection() {
       avatarSeed: Math.floor(Math.random() * 5) + 1,
     };
 
-    const updated = [newPledge, ...pledgesList];
-    setPledgesList(updated);
+    let updated: StudentPledge[];
     try {
-      localStorage.setItem("bdg_student_pledges", JSON.stringify(updated));
-    } catch {
-      // ignore
+      updated = await withStorageWriteLock(window.localStorage, () => {
+        assertStorageWriteLockClear();
+        const raw = localStorage.getItem("bdg_student_pledges");
+        const existing = raw === null ? INITIAL_STUDENT_PLEDGES : JSON.parse(raw) as StudentPledge[];
+        const next = [newPledge, ...existing];
+        localStorage.setItem("bdg_student_pledges", JSON.stringify(next));
+        return next;
+      });
+    } catch (error) {
+      setStorageWriteError(error instanceof Error ? error.message : "Không thể lưu cam kết.");
+      return;
     }
 
+    setStorageWriteError("");
+    setPledgesList(updated);
     setCreatedCertificate(newPledge);
     setSubmittedAlert(true);
     setTimeout(() => setSubmittedAlert(false), 4000);
@@ -98,12 +112,12 @@ export default function CommitmentSection() {
     <div className="space-y-12 py-6 pb-20">
       {/* Header Banner */}
       <div className="text-center max-w-3xl mx-auto space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-bold">
           <HeartHandshake className="w-3.5 h-3.5" />
-          <span>Chuyên mục 6: Cam kết hành động</span>
+          <span>Hành động từ những điều nhỏ</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Em Cam Kết Hành Động Vì Bình Đẳng Giới
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-ink">
+          Cam kết hành động vì bình đẳng giới
         </h1>
         <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
           Mỗi hành động nhỏ đều góp phần tạo nên sự thay đổi lớn. Hãy lựa chọn những cam kết thiết thực trong đời sống hàng ngày và nhận Thẻ Đại sứ Bình đẳng giới mang tên em!
@@ -240,6 +254,11 @@ export default function CommitmentSection() {
         {submittedAlert && (
           <div className="p-4 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-900 text-sm font-bold text-center animate-bounce">
             🎉 Chúc mừng em đã gửi cam kết thành công! Thẻ chứng nhận danh dự đã được tạo bên dưới.
+          </div>
+        )}
+        {storageWriteError && (
+          <div role="alert" className="rounded-xl border border-rose-300 bg-rose-50 p-3 text-center text-sm font-bold text-rose-800">
+            {storageWriteError}
           </div>
         )}
       </div>

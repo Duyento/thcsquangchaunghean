@@ -78,7 +78,7 @@ function CompetitionForm({
 }: {
   initial: CompetitionFormValue;
   onCancel: () => void;
-  onSave: (form: CompetitionFormValue) => void;
+  onSave: (form: CompetitionFormValue) => void | Promise<void>;
 }) {
   const [form, setForm] = useState<CompetitionFormValue>(initial);
   const [criterionName, setCriterionName] = useState("");
@@ -87,11 +87,11 @@ function CompetitionForm({
   const change = <K extends keyof CompetitionFormValue>(key: K, value: CompetitionFormValue[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
     try {
       if (!form.startsAt || !form.endsAt) throw new Error("Vui lòng nhập thời gian bắt đầu và kết thúc.");
-      onSave(toCompetitionInput(form));
+      await onSave(toCompetitionInput(form));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Thông tin cuộc thi chưa hợp lệ.");
     }
@@ -174,7 +174,7 @@ function SubmissionEditor({
   submission: CompetitionSubmission;
   competition: Competition;
   locked: boolean;
-  onSave: (submission: CompetitionSubmission) => void;
+  onSave: (submission: CompetitionSubmission) => void | Promise<void>;
 }) {
   const [status, setStatus] = useState(submission.status);
   const [description, setDescription] = useState(submission.productDescription);
@@ -185,9 +185,9 @@ function SubmissionEditor({
   const [criteriaScores, setCriteriaScores] = useState(submission.criteriaScores);
   const [message, setMessage] = useState("");
 
-  const save = () => {
+  const save = async () => {
     try {
-      const saved = competitionService.saveSubmission(
+      const saved = await competitionService.saveSubmission(
         actor,
         competition.id,
         submission.contestantId,
@@ -202,7 +202,7 @@ function SubmissionEditor({
         },
         submission.id
       );
-      onSave(saved);
+      await onSave(saved);
       setMessage("Đã lưu");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Không thể lưu bài dự thi.");
@@ -265,12 +265,12 @@ export default function CompetitionsTab({ currentUser }: CompetitionsTabProps) {
     setError("");
     setFormMode("create");
   };
-  const saveCompetition = (form: CompetitionFormValue) => {
+  const saveCompetition = async (form: CompetitionFormValue) => {
     try {
       if (formMode === "edit" && selected) {
-        competitionService.updateCompetition(currentUser, selected.id, form);
+        await competitionService.updateCompetition(currentUser, selected.id, form);
       } else {
-        const created = competitionService.createCompetition(currentUser, form);
+        const created = await competitionService.createCompetition(currentUser, form);
         setSelectedId(created.id);
       }
       refresh();
@@ -305,12 +305,12 @@ export default function CompetitionsTab({ currentUser }: CompetitionsTabProps) {
     event.target.value = "";
   };
 
-  const importPreviewedRows = () => {
+  const importPreviewedRows = async () => {
     if (!selected || !importRows.length) return;
     try {
       const preview = competitionService.previewContestantImport(currentUser, selected.id, importRows);
       if (preview.invalidCount) throw new Error("Còn dòng lỗi/trùng; chưa nhập dòng nào.");
-      competitionService.importContestants(currentUser, selected.id, importRows);
+      await competitionService.importContestants(currentUser, selected.id, importRows);
       refresh();
       setImportRows([]);
       setImportSummary("Đã nhập danh sách thí sinh.");
@@ -320,10 +320,10 @@ export default function CompetitionsTab({ currentUser }: CompetitionsTabProps) {
     }
   };
 
-  const addManualContestant = () => {
+  const addManualContestant = async () => {
     if (!selected) return;
     try {
-      competitionService.addContestant(currentUser, selected.id, { fullName: name, className });
+      await competitionService.addContestant(currentUser, selected.id, { fullName: name, className });
       setName("");
       setClassName("");
       setError("");
@@ -333,10 +333,10 @@ export default function CompetitionsTab({ currentUser }: CompetitionsTabProps) {
     }
   };
 
-  const addLinkedStudent = () => {
+  const addLinkedStudent = async () => {
     if (!selected || !studentId) return;
     try {
-      competitionService.addLinkedStudent(currentUser, selected.id, studentId);
+      await competitionService.addLinkedStudent(currentUser, selected.id, studentId);
       setStudentId("");
       setError("");
       refresh();
@@ -345,10 +345,10 @@ export default function CompetitionsTab({ currentUser }: CompetitionsTabProps) {
     }
   };
 
-  const archiveSelected = () => {
+  const archiveSelected = async () => {
     if (!selected || !window.confirm("Xác nhận khóa chỉnh sửa kết quả và lưu trữ cuộc thi? Sau đó chỉ có thể xem và xuất dữ liệu.")) return;
     try {
-      competitionService.archiveCompetition(currentUser, selected.id, true);
+      await competitionService.archiveCompetition(currentUser, selected.id, true);
       refresh();
       setNotice("Cuộc thi đã lưu trữ và khóa chỉnh sửa.");
     } catch (reason) {
@@ -408,8 +408,8 @@ export default function CompetitionsTab({ currentUser }: CompetitionsTabProps) {
           <button onClick={() => { setSelectedId(""); setError(""); }} className="inline-flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm"><ArrowLeft size={16} /> Tất cả cuộc thi</button>
           <div className="flex flex-wrap gap-2">
             {!locked && <button onClick={() => setFormMode("edit")} className="rounded-lg border bg-white px-3 py-2 text-sm">Sửa thông tin</button>}
-            {!locked && selected.status !== "ended" && <button onClick={() => {
-              try { competitionService.closeCompetition(currentUser, selected.id); refresh(); }
+            {!locked && selected.status !== "ended" && <button onClick={async () => {
+              try { await competitionService.closeCompetition(currentUser, selected.id); refresh(); }
               catch (reason) { setError(reason instanceof Error ? reason.message : "Không thể đóng cuộc thi."); }
             }} className="rounded-lg border bg-white px-3 py-2 text-sm">Đóng cuộc thi</button>}
             {!locked && <button onClick={archiveSelected} className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-3 py-2 text-sm font-semibold text-white"><Archive size={16} /> Khóa & lưu trữ</button>}
@@ -475,9 +475,9 @@ export default function CompetitionsTab({ currentUser }: CompetitionsTabProps) {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-semibold">{contestant.fullName}</p>
                     {selected.allowMultipleSubmissions && !locked && (
-                      <button onClick={() => {
+                      <button onClick={async () => {
                         try {
-                          competitionService.addSubmission(currentUser, selected.id, contestant.id);
+                          await competitionService.addSubmission(currentUser, selected.id, contestant.id);
                           refresh();
                         } catch (reason) {
                           setError(reason instanceof Error ? reason.message : "Không thể tạo bài dự thi.");

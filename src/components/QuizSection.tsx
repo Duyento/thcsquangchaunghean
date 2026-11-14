@@ -134,15 +134,15 @@ export default function QuizSection({ setActiveTab }: QuizSectionProps) {
     <div className="space-y-10 py-6 pb-20">
       {/* Header Banner */}
       <div className="text-center max-w-3xl mx-auto space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-bold">
           <Award className="w-3.5 h-3.5" />
-          <span>Chuyên mục 4: Đấu trí kiến thức</span>
+          <span>Luyện tập và củng cố</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Thử Thách Bình Đẳng Giới
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-ink">
+          Thử thách kiến thức
         </h1>
         <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-          Ngân hàng 30 câu hỏi trắc nghiệm chuẩn hóa phân bổ theo 6 chủ đề giáo dục. Có giải thích sư phạm chi tiết sau từng lựa chọn để học sinh hiểu sâu và nhớ lâu.
+          Ngân hàng hiện có {publishedQuestionsList.length} câu hỏi trắc nghiệm phân bổ theo 6 chủ đề giáo dục. Có giải thích sư phạm chi tiết sau từng lựa chọn để học sinh hiểu sâu và nhớ lâu.
         </p>
       </div>
 
@@ -163,7 +163,9 @@ export default function QuizSection({ setActiveTab }: QuizSectionProps) {
             >
               {topicOptions.map((opt) => (
                 <option key={opt.id} value={opt.id}>
-                  {opt.title} ({opt.id === 0 ? "30 câu" : "5 câu"})
+                  {opt.title} ({opt.id === 0
+                    ? publishedQuestionsList.length
+                    : publishedQuestionsList.filter((question) => question.topicId === opt.id).length} câu)
                 </option>
               ))}
             </select>

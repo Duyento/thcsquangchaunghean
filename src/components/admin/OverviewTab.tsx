@@ -318,7 +318,7 @@ export default function OverviewTab({ currentUser, onNavigateTab }: OverviewTabP
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
             <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Lượt thi hoàn thành</p>
             <p className="text-2xl font-extrabold text-slate-900 mt-1">{schoolStats.totalAttempts}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Lượt nộp bài 30 câu hỏi</p>
+            <p className="text-[11px] text-slate-500 mt-1">Lượt nộp bài thử thách</p>
           </div>
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
             <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Học sinh đã tham gia</p>

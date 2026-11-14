@@ -9,3 +9,5 @@ coverage/
 
 audit-all.json
 audit-production.json
+
+.firebase-emulator-data/

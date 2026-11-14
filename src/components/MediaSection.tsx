@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { STUDENT_INITIATIVES, INFOGRAPHICS_DATA, MEDIA_VIDEOS, INSPIRING_QUOTES } from "../data/initiativesData";
 import { contentService } from "../services/contentService";
+import { ORIGINAL_JSON_FILE_PATH } from "../data/officialData";
+import { publicAssetUrl, siteImages } from "../assets/siteImages";
 import { MediaVideoItem, GalleryImageItem } from "../types/adminTypes";
 import {
   Sparkles,
@@ -50,7 +52,7 @@ export default function MediaSection({ setActiveTab }: MediaSectionProps) {
     topicTitle: "Bình đẳng giới trong lựa chọn nghề nghiệp",
     videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     youtubeId: "dQw4w9WgXcQ",
-    thumbnailUrl: "/src/assets/images/hero_gender_equality_1794298223798.jpg",
+    thumbnailUrl: siteImages.hero,
     presenter: "Chi đội 8C1 & CLB Truyền Thông Măng Non",
     duration: "06:45",
   };
@@ -68,12 +70,12 @@ export default function MediaSection({ setActiveTab }: MediaSectionProps) {
     <div className="space-y-12 py-6 pb-20">
       {/* Header Banner */}
       <div className="text-center max-w-3xl mx-auto space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-wider">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-bold">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Chuyên mục 5: Tiếng nói thanh thiếu niên</span>
+          <span>Sáng tạo và chia sẻ</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Góc Lan Tỏa & Sáng Kiến Truyền Thông Số
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-ink">
+          Thư viện và sáng kiến
         </h1>
         <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
           Không gian tôn vinh các sáng kiến, sản phẩm truyền thông số, tranh vẽ cổ động và câu chuyện tích cực của học sinh Trường THCS Quảng Châu vì một xã hội không rào cản giới.
@@ -112,7 +114,7 @@ export default function MediaSection({ setActiveTab }: MediaSectionProps) {
           </div>
           <div className="lg:col-span-5 h-64 lg:h-full min-h-[280px] relative">
             <img
-              src="/src/assets/images/youth_action_campaign_1794298224215.jpg"
+              src={siteImages.campaign}
               alt="Học sinh THCS Quảng Châu tham gia chiến dịch bình đẳng giới"
               className="w-full h-full object-cover object-center"
               referrerPolicy="no-referrer"
@@ -315,7 +317,7 @@ export default function MediaSection({ setActiveTab }: MediaSectionProps) {
                 className="relative w-full h-full group cursor-pointer"
               >
                 <img
-                  src={activeVideo.thumbnailUrl || "/src/assets/images/stem_and_dreams_1794298224995.jpg"}
+                  src={activeVideo.thumbnailUrl || siteImages.stem}
                   alt={activeVideo.title}
                   className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-300"
                 />
@@ -499,7 +501,7 @@ export default function MediaSection({ setActiveTab }: MediaSectionProps) {
             </p>
           </div>
           <a
-            href="/assets/aistudio/Kho_du_lieu_Binh_dang_gioi_THCS_Quang_Chau_b7dc824c.json"
+            href={publicAssetUrl(ORIGINAL_JSON_FILE_PATH)}
             download="Kho_du_lieu_Binh_dang_gioi_THCS_Quang_Chau_b7dc824c.json"
             target="_blank"
             rel="noopener noreferrer"

@@ -43,13 +43,19 @@ export default function ApprovalWorkflowTab({ currentUser }: ApprovalWorkflowTab
   }, [currentUser]);
 
   // Approve & Publish action
-  const handleApprove = (type: "question" | "post" | "video" | "image", id: string, name: string) => {
+  const handleApprove = async (type: "question" | "post" | "video" | "image", id: string, name: string) => {
     if (!isSuperAdmin) {
       alert("Chỉ Admin chính của nhà trường mới có quyền Duyệt và Xuất bản công khai nội dung!");
       return;
     }
 
-    const res = contentService.changeContentStatus(currentUser, type, id, "published");
+    let res;
+    try {
+      res = await contentService.changeContentStatus(currentUser, type, id, "published");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Không thể duyệt nội dung.");
+      return;
+    }
     if (res.success) {
       refreshPending();
       setActionSuccess(`Đã duyệt và xuất bản công khai "${name}" lên website nhà trường!`);
@@ -60,16 +66,22 @@ export default function ApprovalWorkflowTab({ currentUser }: ApprovalWorkflowTab
   };
 
   // Reject / Return to draft action
-  const handleConfirmReject = () => {
+  const handleConfirmReject = async () => {
     if (!rejectModalItem) return;
 
-    const res = contentService.changeContentStatus(
-      currentUser,
-      rejectModalItem.type,
-      rejectModalItem.id,
-      "draft",
-      rejectReason.trim() || "Cần rà soát và bổ sung thêm thông tin"
-    );
+    let res;
+    try {
+      res = await contentService.changeContentStatus(
+        currentUser,
+        rejectModalItem.type,
+        rejectModalItem.id,
+        "draft",
+        rejectReason.trim() || "Cần rà soát và bổ sung thêm thông tin"
+      );
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Không thể thực hiện.");
+      return;
+    }
 
     if (res.success) {
       refreshPending();
